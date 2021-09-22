@@ -9,6 +9,7 @@
 #include "opengl.hpp"
 #include "cgra/cgra_mesh.hpp"
 #include "skeleton_model.hpp"
+#include "cgra/grass_model.hpp"
 
 
 // Basic model that holds the shader, mesh and transform for drawing.
@@ -47,8 +48,7 @@ private:
 	bool m_show_grid = false;
 	bool m_showWireframe = false;
 
-	// geometry
-	basic_model m_model;
+	//basic_model m_model;
 
 public:
 	// setup
@@ -68,4 +68,7 @@ public:
 	void scrollCallback(double xoffset, double yoffset);
 	void keyCallback(int key, int scancode, int action, int mods);
 	void charCallback(unsigned int c);
+
+	// convert grass model into basic model
+	basic_model toRenderMesh(grass_model blade);
 };

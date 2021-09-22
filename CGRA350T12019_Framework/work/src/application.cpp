@@ -15,6 +15,7 @@
 #include "cgra/cgra_image.hpp"
 #include "cgra/cgra_shader.hpp"
 #include "cgra/cgra_wavefront.hpp"
+#include "cgra/grass_model.hpp"
 
 
 using namespace std;
@@ -41,9 +42,9 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
 	GLuint shader = sb.build();
 
-	m_model.shader = shader;
+	/*m_model.shader = shader;
 	m_model.mesh = load_wavefront_data(CGRA_SRCDIR + std::string("/res//assets//teapot.obj")).build();
-	m_model.color = vec3(1, 0, 0);
+	m_model.color = vec3(1, 0, 0);*/
 }
 
 
@@ -80,7 +81,13 @@ void Application::render() {
 
 
 	// draw the model
-	m_model.draw(view, proj);
+	//m_model.draw(view, proj);
+}
+
+// added methods
+basic_model Application::toRenderMesh(grass_model grass_blade) {
+	// TODO: determine level of detail for this grass blade
+	// TODO: construct mesh from line segments
 }
 
 
