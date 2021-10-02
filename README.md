@@ -2,6 +2,8 @@
 
 After cloneing, create an empty "build" folder inside the "CGRA350T12019_Framework" directory and use cmake to make the soulution.
 
+From inside the build folder..
+
 For Windows
 cmake -G "Visual Studio XX" ..\work
 
