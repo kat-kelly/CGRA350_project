@@ -1,5 +1,7 @@
 # CGRA350_project
 
+If u want to add files, create the cpp and hpp inside the work/src folder and add them in the CmakeList file before building.
+
 After cloneing, create an empty "build" folder inside the "CGRA350T12019_Framework" directory and use cmake to make the soulution.
 
 From inside the build folder..
