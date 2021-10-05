@@ -5,7 +5,9 @@
 #include <chrono>
 
 // project
+#include <opengl.hpp>
 #include "grass_model.hpp"
+#include "cgra_mesh.hpp"
 
 using namespace std;
 using namespace cgra;
@@ -28,9 +30,27 @@ void grass_model::setControlPoints(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm
 }
 
 // drawing and rendering
-void grass_model::draw() {
-	// TODO: draw control points
+void grass_model::drawPolyline() {
+	// set spline
+	mesh_builder mb = mesh_builder();
+	vec3[] cp = getControlPoints();
+	for (int i = 0; i < 4; i++) {
+		mesh_vertex mv;
+		mv.pos = cp[i];
+		mb.push_vertex(mv);
+		mb.push_index(i);
+	}
+	spline.mesh = mb.build();
+	spline.color = vec3(1, 0, 0);
+	spline.mesh.mode = GL_LINE_STRIP;
+
 	// TODO: draw spline
+	spline.draw();
+}
+
+void grass_model::drawCurve() {
+	// TODO: draw control points
+	// TODO: draw straight lines between control points (in red?)
 }
 
 glm::vec3 grass_model::interpolate(float t) {

@@ -45,6 +45,7 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	/*m_model.shader = shader;
 	m_model.mesh = load_wavefront_data(CGRA_SRCDIR + std::string("/res//assets//teapot.obj")).build();
 	m_model.color = vec3(1, 0, 0);*/
+	grass.drawPolyline();
 }
 
 

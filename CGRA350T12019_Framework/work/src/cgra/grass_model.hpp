@@ -6,6 +6,7 @@
 
 // project
 #include <opengl.hpp>
+#include "application.hpp"
 
 class grass_model {
 private:
@@ -14,6 +15,10 @@ private:
 	glm::vec3 control_point1;
 	glm::vec3 control_point2;
 	glm::vec3 control_point3;
+
+	// meshes
+	basic_model curve; // FIXME: missing specifier
+	basic_model spline; // FIXME: missing specifier
 public:
 	grass_model(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3); // constructor
 
@@ -22,6 +27,7 @@ public:
 	void setControlPoints(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3);
 
 	// drawing and rendering
-	void draw();
+	void drawPolyline();
+	void drawCurve();
 	glm::vec3 interpolate(float t);
 };
