@@ -49,7 +49,7 @@ private:
 	bool m_showWireframe = false;
 
 	//basic_model m_model;
-	grass_model grass = grass_model(glm::vec3(0, 0, 0), glm::vec3(1, 1, 0), glm::vec3(0, 2, 0), glm::vec3(0, 3, 0));
+	grass_model grass;// = grass_model(glm::vec3(0, 0, 0), glm::vec3(1, 1, 0), glm::vec3(0, 2, 0), glm::vec3(0, 3, 0));
 
 public:
 	// setup
@@ -71,5 +71,5 @@ public:
 	void charCallback(unsigned int c);
 
 	// convert grass model into basic model
-	basic_model toRenderMesh(grass_model blade);
+	//basic_model toRenderMesh(grass_model blade);
 };

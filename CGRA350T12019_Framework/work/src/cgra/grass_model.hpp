@@ -1,12 +1,30 @@
 #pragma once
 
+// std
+#include <iostream>
+#include <string>
+#include <chrono>
+
 // glm
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 // project
-#include <opengl.hpp>
+#include "opengl.hpp"
+#include "cgra/cgra_mesh.hpp"
 #include "application.hpp"
+
+/*struct basic_model {
+	GLuint shader = 0;
+	cgra::gl_mesh mesh;
+	glm::vec3 color{ 0.7 };
+	glm::mat4 modelTransform{ 1.0 };
+	GLuint texture;
+
+	void draw(const glm::mat4& view, const glm::mat4 proj);
+};*/
+
+// TODO: make grass a namespace?
 
 class grass_model {
 private:
@@ -17,10 +35,11 @@ private:
 	glm::vec3 control_point3;
 
 	// meshes
-	basic_model curve; // FIXME: missing specifier
-	basic_model spline; // FIXME: missing specifier
+	cgra::gl_mesh curve; // FIXME: missing specifier
+	cgra::gl_mesh spline; // FIXME: missing specifier
 public:
 	grass_model(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3); // constructor
+	grass_model() = default;
 
 	// getters and setters
 	glm::vec3 * getControlPoints();

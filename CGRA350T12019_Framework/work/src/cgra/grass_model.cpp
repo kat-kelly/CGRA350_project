@@ -1,3 +1,5 @@
+#include "grass_model.hpp"
+#include "grass_model.hpp"
 
 // std
 #include <iostream>
@@ -5,7 +7,7 @@
 #include <chrono>
 
 // project
-#include <opengl.hpp>
+#include "opengl.hpp"
 #include "grass_model.hpp"
 #include "cgra_mesh.hpp"
 
@@ -13,16 +15,19 @@ using namespace std;
 using namespace cgra;
 using namespace glm;
 
-
-grass_model::grass_model(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3) {
-
+grass_model::grass_model(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3)
+{
 }
+
+/*grass_model::grass_model()
+{
+}*/
 
 vec3* grass_model::getControlPoints() {
 	// return array containing the four control points
 	return { control_point0, control_point1, control_point2, control_point3 };
 }
-void grass_model::setControlPoints(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3) {
+void grass_model::setControlPoints(vec3 p0, vec3 p1, vec3 p2, vec3 p3) {
 	control_point0 = p0;
 	control_point1 = p1;
 	control_point2 = p2;
@@ -40,9 +45,9 @@ void grass_model::drawPolyline() {
 		mb.push_vertex(mv);
 		mb.push_index(i);
 	}
-	spline.mesh = mb.build();
-	spline.color = vec3(1, 0, 0);
-	spline.mesh.mode = GL_LINE_STRIP;
+	spline = mb.build();
+	//spline.color = vec3(1, 0, 0);
+	//spline.mesh.mode = GL_LINE_STRIP;
 
 	// TODO: draw spline
 	spline.draw();
