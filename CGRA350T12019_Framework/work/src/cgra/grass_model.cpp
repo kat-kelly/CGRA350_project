@@ -34,6 +34,13 @@ void grass_model::setControlPoints(vec3 p0, vec3 p1, vec3 p2, vec3 p3) {
 	control_point3 = p3;
 }
 
+gl_mesh grass_model::getSpline() {
+	return spline;
+}
+gl_mesh grass_model::getCurve() {
+	return curve;
+}
+
 // drawing and rendering
 void grass_model::drawPolyline() {
 	// set spline

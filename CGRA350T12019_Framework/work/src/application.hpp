@@ -71,5 +71,6 @@ public:
 	void charCallback(unsigned int c);
 
 	// convert grass model into basic model
-	//basic_model toRenderMesh(grass_model blade);
+	basic_model meshToModel(cgra::gl_mesh mesh);
+	basic_model toRenderMesh(grass_model blade);
 };

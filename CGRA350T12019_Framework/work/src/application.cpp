@@ -45,7 +45,6 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	/*m_model.shader = shader;
 	m_model.mesh = load_wavefront_data(CGRA_SRCDIR + std::string("/res//assets//teapot.obj")).build();
 	m_model.color = vec3(1, 0, 0);*/
-	//grass.drawPolyline(); // FIXME
 }
 
 
@@ -81,21 +80,29 @@ void Application::render() {
 	glPolygonMode(GL_FRONT_AND_BACK, (m_showWireframe) ? GL_LINE : GL_FILL);
 
 	// set control points
-	grass.setControlPoints(vec3(0, 0, 0), vec3(1, 1, 0), vec3(0, 2, 0), vec3(0, 3, 0)); // FIXME: unresolved external symbol
+	//grass.setControlPoints(vec3(0, 0, 0), vec3(1, 1, 0), vec3(0, 2, 0), vec3(0, 3, 0)); // FIXME: unresolved external symbol
 	// draw the model
 	
 	//m_model.draw(view, proj);
+	meshToModel(grass.getSpline()).draw(view, proj);
+}
+
+basic_model Application::meshToModel(gl_mesh mesh) {
+	basic_model model;
+	model.mesh = mesh;
+	model.color = vec3(1, 0, 0); // TODO: make changable
+	return model;
 }
 
 // added methods
-/*basic_model Application::toRenderMesh(grass_model grass_blade) {
+basic_model Application::toRenderMesh(grass_model grass_blade) {
 	// TODO: determine level of detail for this grass blade
 	// TODO: construct mesh from line segments
 	basic_model grass;
 	//grass.mesh = grass_blade.
 	//grass.color = vec3(0, 1, 0);
 	return grass;
-}*/
+}
 
 
 void Application::renderGUI() {
