@@ -29,77 +29,74 @@ wind_model::wind_model()
 {
 	shader_builder sb;
 	sb.set_shader(GL_VERTEX_SHADER, CGRA_SRCDIR + string("//res//shaders//color_vert.glsl"));
-	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + string("//res//shaders//color_frag.glsl"));
+	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + string("//res//shaders//color_frag_wind.glsl"));
 	shader = sb.build();
 
 
 }
+void wind_model::run(const mat4& view, const mat4& proj) {
+	if (display < 1) return;
+	simulate();
 
-void wind_model::draw(const mat4& view, const mat4& proj)
-{
-	// step();
-	// Visualize wind
+	if (display < 2) return;
+	draw(view, proj);
+}
+
+void wind_model::simulate() {
+
 	double t = glfwGetTime();
-
 	if (t - old_t > frameCap) {
+		for (int i = 3; i < N - 3; ++i) {
+			vec3 index1 = vec3(2, 3, i);
+			mat4 r = rotate(mat4(1), radians(w_angle), vec3(0, 1, 0));
+			vec3 vel = r * vec4(w_strength, 0, 0, 0);
 
-		for (int i = 0; i < N; i++) {
+			if (pulse > 0) {
+				float cV = w_strength + addon;
+				vel = r * vec4(cV, 0, 0, 0);
+				if (D && w_strength + addon >= w_strength + 1) D = false;
+				if (!D && w_strength + addon <= -0) D = true;
+				addon = (D) ? addon + pulse : addon - pulse;
+			}
 
-			vec3 vel1 = vec3(2, 1.2, 0);
-			vec3 vel2 = vec3(2, 0.9, 0);
-
-			vec3 vel = (aa == 1) ? vel1 : vel2;
-			vec a = vec3(1, 1, i);
-
-			w_field->addVelocity(a, vel);
-
-			w_field->addDen(a, 1);
-			//w_field->addDen(b, 10);
-			//w_field->addDen(c, 10);
+			w_field->addVelocity(index1, vel);
 		}
-		aa = -aa;
 
 		w_field->step();
 		old_t = t;
 	}
 
-	if (w_show == false) return;
+}
 
+
+void wind_model::draw(const mat4& view, const mat4& proj)
+{
 	glUseProgram(shader);
-	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(color));
 	glUniformMatrix4fv(glGetUniformLocation(shader, "uProjectionMatrix"), 1, false, value_ptr(proj));
 	vec3 vec; // place holders
 	mat4 mv;
-	// ___________________________________		ITEMS __________________________________________________//
-	//vec = vec3(N, N, N);// setup
-	//mv = view;
 
-	//mv = translate(mv, vec3(-N / 2, 0, -N / 2));	 // translate
-	//mv = mv * orientation(normalize(vec), vec3(0, 0, 1));		// rotation
-	//mv = scale(mv, vec3(0.1, 0.1, length(vec)));				// scale
-
-	//glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(mv));
-	//drawCylinder();
-
-	// ___________________________________		ITEMS idk __________________________________________________//
-	//float x = w_field->Vy[IX(0, 0, 0)];
-	//cout << x;
-
-	for (int k = 0; k < N; k++) {
-		for (int j = 0; j < N; j++) {
-			for (int i = 0; i < N; i++) {
+	for (int k = 0; k < N; ++k) {
+		for (int j = 0; j < N; ++j) {
+			for (int i = 0; i < N; ++i) {
 				float x = w_field->Vx[IX(i, j, k)];
 				float y = w_field->Vy[IX(i, j, k)];
 				float z = w_field->Vz[IX(i, j, k)];
 
 				vec = vec3(x, y, z);// setup
 				mv = view;
+
+				vec3 norm = normalize(vec);
+				float len = length(vec);
+
 				mv = scale(mv, vec3(S));// scale everything
 
-				mv = translate(mv, vec3(i + 0.5 - N / 2, j, k + 0.5 - N / 2));	 // translate
-				mv = mv * orientation(normalize(vec), vec3(0, 0, 1));		// rotation
-				mv = scale(mv, vec3(0.02, 0.02, length(vec)));				// scale
+				mv = translate(mv, vec3(i + 0.5 - N / 2, j + 0.5, k + 0.5 - N / 2));	 // translate
+				mv = mv * orientation(norm, vec3(0, 0, 1));		// rotation
+				mv = scale(mv, vec3(0.01, 0.01, len));				// scale
 
+
+				glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(1 - len, len, 0)));
 				glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(mv));
 				drawCone();
 			}
@@ -108,16 +105,9 @@ void wind_model::draw(const mat4& view, const mat4& proj)
 	}
 
 
-	//_________________________		Wind  testing      _________________________________________________//
-	//vec = vec3(3, 5, 5); // setup
-	//mv = view;
-
-	//mv = mv * orientation(normalize(vec), vec3(0, 0, 1));	// direction
-	//mv = scale(mv, vec3(1, 1, length(vec)));				 // strength
-
-	//glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(mv));
-	//drawCone();
 }
+
+
 
 wind_field::wind_field(int N, float diffusion, float viscosity, float dt)
 {
@@ -137,7 +127,7 @@ wind_field::wind_field(int N, float diffusion, float viscosity, float dt)
 	this->Vy0 = new float[N * N * N];
 	this->Vz0 = new float[N * N * N];
 
-	for (int i = 0; i < N * N * N ; i++) {
+	for (int i = 0; i < N * N * N; ++i) {
 		s[i] = 0;
 		density[i] = 0;
 
@@ -171,7 +161,7 @@ void wind_field::step()
 	advect(0, density, s, Vx, Vy, Vz);
 }
 
-void wind_field::addVelocity(vec3 index , vec3 amount)
+void wind_field::addVelocity(vec3 index, vec3 amount)
 {
 	int i = IX(index.x, index.y, index.z);
 
@@ -180,7 +170,7 @@ void wind_field::addVelocity(vec3 index , vec3 amount)
 	Vz[i] += amount.z;
 }
 
-void wind_field::addDen(vec3 index ,float amount)
+void wind_field::addDen(vec3 index, float amount)
 {
 	int i = IX(index.x, index.y, index.z);
 	density[i] += amount;
@@ -207,9 +197,9 @@ void wind_field::advect(int b, float* d, float* d0, float* velocX, float* velocY
 	float ifloat, jfloat, kfloat;
 	int i, j, k;
 
-	for (k = 1, kfloat = 1; k < N - 1; k++, kfloat++) {
-		for (j = 1, jfloat = 1; j < N - 1; j++, jfloat++) {
-			for (i = 1, ifloat = 1; i < N - 1; i++, ifloat++) {
+	for (k = 1, kfloat = 1; k < N - 1; ++k, kfloat++) {
+		for (j = 1, jfloat = 1; j < N - 1; ++j, jfloat++) {
+			for (i = 1, ifloat = 1; i < N - 1; ++i, ifloat++) {
 				tmp1 = dtx * velocX[IX(i, j, k)];
 				tmp2 = dty * velocY[IX(i, j, k)];
 				tmp3 = dtz * velocZ[IX(i, j, k)];
@@ -257,14 +247,14 @@ void wind_field::advect(int b, float* d, float* d0, float* velocX, float* velocY
 			}
 		}
 	}
-	set_bnd(b, d);
+	set_Boundaries(b, d);
 }
 
 void wind_field::project(float* velocX, float* velocY, float* velocZ, float* p, float* div)
 {
-	for (int k = 1; k < N - 1; k++) {
-		for (int j = 1; j < N - 1; j++) {
-			for (int i = 1; i < N - 1; i++) {
+	for (int k = 1; k < N - 1; ++k) {
+		for (int j = 1; j < N - 1; ++j) {
+			for (int i = 1; i < N - 1; ++i) {
 				div[IX(i, j, k)] = -0.5f * (
 					velocX[IX(i + 1, j, k)]
 					- velocX[IX(i - 1, j, k)]
@@ -277,13 +267,13 @@ void wind_field::project(float* velocX, float* velocY, float* velocZ, float* p, 
 			}
 		}
 	}
-	set_bnd(0, div);
-	set_bnd(0, p);
+	set_Boundaries(0, div);
+	set_Boundaries(0, p);
 	lin_solve(0, p, div, 1, 6);
 
-	for (int k = 1; k < N - 1; k++) {
-		for (int j = 1; j < N - 1; j++) {
-			for (int i = 1; i < N - 1; i++) {
+	for (int k = 1; k < N - 1; ++k) {
+		for (int j = 1; j < N - 1; ++j) {
+			for (int i = 1; i < N - 1; ++i) {
 				velocX[IX(i, j, k)] -= 0.5f * (p[IX(i + 1, j, k)]
 					- p[IX(i - 1, j, k)]) * N;
 				velocY[IX(i, j, k)] -= 0.5f * (p[IX(i, j + 1, k)]
@@ -293,18 +283,18 @@ void wind_field::project(float* velocX, float* velocY, float* velocZ, float* p, 
 			}
 		}
 	}
-	set_bnd(1, velocX);
-	set_bnd(2, velocY);
-	set_bnd(3, velocZ);
+	set_Boundaries(1, velocX);
+	set_Boundaries(2, velocY);
+	set_Boundaries(3, velocZ);
 }
 
 void wind_field::lin_solve(int b, float* x, float* x0, float a, float c)
 {
 	float cRecip = 1.0 / c;
-	for (int k = 0; k < iter; k++) {
-		for (int m = 1; m < N - 1; m++) {
-			for (int j = 1; j < N - 1; j++) {
-				for (int i = 1; i < N - 1; i++) {
+	for (int k = 0; k < iter; ++k) {
+		for (int m = 1; m < N - 1; ++m) {
+			for (int j = 1; j < N - 1; ++j) {
+				for (int i = 1; i < N - 1; ++i) {
 					x[IX(i, j, m)] =
 						(x0[IX(i, j, m)]
 							+ a * (x[IX(i + 1, j, m)]
@@ -317,25 +307,25 @@ void wind_field::lin_solve(int b, float* x, float* x0, float a, float c)
 				}
 			}
 		}
-		set_bnd(b, x);
+		set_Boundaries(b, x);
 	}
 }
-void wind_field::set_bnd(int b, float* x)
+void wind_field::set_Boundaries(int b, float* x)
 {
-	for (int j = 1; j < N - 1; j++) {
-		for (int i = 1; i < N - 1; i++) {
+	for (int j = 1; j < N - 1; ++j) {
+		for (int i = 1; i < N - 1; ++i) {
 			x[IX(i, j, 0)] = b == 3 ? -x[IX(i, j, 1)] : x[IX(i, j, 1)];
 			x[IX(i, j, N - 1)] = b == 3 ? -x[IX(i, j, N - 2)] : x[IX(i, j, N - 2)];
 		}
 	}
-	for (int k = 1; k < N - 1; k++) {
-		for (int i = 1; i < N - 1; i++) {
+	for (int k = 1; k < N - 1; ++k) {
+		for (int i = 1; i < N - 1; ++i) {
 			x[IX(i, 0, k)] = b == 2 ? -x[IX(i, 1, k)] : x[IX(i, 1, k)];
 			x[IX(i, N - 1, k)] = b == 2 ? -x[IX(i, N - 2, k)] : x[IX(i, N - 2, k)];
 		}
 	}
-	for (int k = 1; k < N - 1; k++) {
-		for (int j = 1; j < N - 1; j++) {
+	for (int k = 1; k < N - 1; ++k) {
+		for (int j = 1; j < N - 1; ++j) {
 			x[IX(0, j, k)] = b == 1 ? -x[IX(1, j, k)] : x[IX(1, j, k)];
 			x[IX(N - 1, j, k)] = b == 1 ? -x[IX(N - 2, j, k)] : x[IX(N - 2, j, k)];
 		}
@@ -417,10 +407,10 @@ void wind_field::set_bnd(int b, float* x)
 //
 //void wind_field::lin_solve(int b, vec3* x, vec3* x0, float a, float c) {
 //	float cRecip = 1.0 / c;
-//	for (int k = 0; k < iter; k++) {
-//		for (int m = 1; m < N - 1; m++) {
-//			for (int j = 1; j < N - 1; j++) {
-//				for (int i = 1; i < N - 1; i++) {
+//	for (int k = 0; k < iter; ++k) {
+//		for (int m = 1; m < N - 1; ++m) {
+//			for (int j = 1; j < N - 1; ++j) {
+//				for (int i = 1; i < N - 1; ++i) {
 //
 //					x[IX(i, j, m)].x =
 //						(x0[IX(i, j, m)].x
@@ -460,10 +450,10 @@ void wind_field::set_bnd(int b, float* x)
 //
 //void wind_field::lin_solve(int b, float* x, float* x0, float a, float c) {
 //	float cRecip = 1.0 / c;
-//	for (int k = 0; k < iter; k++) {
-//		for (int m = 1; m < N - 1; m++) {
-//			for (int j = 1; j < N - 1; j++) {
-//				for (int i = 1; i < N - 1; i++) {
+//	for (int k = 0; k < iter; ++k) {
+//		for (int m = 1; m < N - 1; ++m) {
+//			for (int j = 1; j < N - 1; ++j) {
+//				for (int i = 1; i < N - 1; ++i) {
 //					x[IX(i, j, m)] =
 //						(x0[IX(i, j, m)]
 //							+ a * (x[IX(i + 1, j, m)]
@@ -480,9 +470,9 @@ void wind_field::set_bnd(int b, float* x)
 //	}
 //}
 //void wind_field::project(vec3* veloc, vec3* pdiv) {
-//	for (int k = 1; k < N - 1; k++) {
-//		for (int j = 1; j < N - 1; j++) {
-//			for (int i = 1; i < N - 1; i++) {
+//	for (int k = 1; k < N - 1; ++k) {
+//		for (int j = 1; j < N - 1; ++j) {
+//			for (int i = 1; i < N - 1; ++i) {
 //				pdiv[IX(i, j, k)].y = -0.5f * (
 //					veloc[IX(i + 1, j, k)].x
 //					- veloc[IX(i - 1, j, k)].x
@@ -499,9 +489,9 @@ void wind_field::set_bnd(int b, float* x)
 //	//set_bnd(0, p);
 //	lin_solve(0, p, div, 1, 6);
 //
-//	for (int k = 1; k < N - 1; k++) {
-//		for (int j = 1; j < N - 1; j++) {
-//			for (int i = 1; i < N - 1; i++) {
+//	for (int k = 1; k < N - 1; ++k) {
+//		for (int j = 1; j < N - 1; ++j) {
+//			for (int i = 1; i < N - 1; ++i) {
 //				veloc[IX(i, j, k)].x -= 0.5f * (pdiv[IX(i + 1, j, k)].x
 //					- pdiv[IX(i - 1, j, k)].x) * N;
 //				veloc[IX(i, j, k)].y -= 0.5f * (pdiv[IX(i, j + 1, k)].x
@@ -530,9 +520,9 @@ void wind_field::set_bnd(int b, float* x)
 //	float ifloat, jfloat, kfloat;
 //	int i, j, k;
 //
-//	for (k = 1, kfloat = 1; k < N - 1; k++, kfloat++) {
-//		for (j = 1, jfloat = 1; j < N - 1; j++, jfloat++) {
-//			for (i = 1, ifloat = 1; i < N - 1; i++, ifloat++) {
+//	for (k = 1, kfloat = 1; k < N - 1; ++k, kfloat++) {
+//		for (j = 1, jfloat = 1; j < N - 1; ++j, jfloat++) {
+//			for (i = 1, ifloat = 1; i < N - 1; ++i, ifloat++) {
 //				tmp = ddt * veloc[IX(i, j, k)];
 //				dim = vec3(ifloat - tmp.x, jfloat - tmp.y, kfloat - tmp.z);
 //
@@ -576,20 +566,20 @@ void wind_field::set_bnd(int b, float* x)
 //
 //void wind_field::set_bnd(int b, vec3* x)
 //{
-//	for (int j = 1; j < N - 1; j++) {
-//		for (int i = 1; i < N - 1; i++) {
+//	for (int j = 1; j < N - 1; ++j) {
+//		for (int i = 1; i < N - 1; ++i) {
 //			x[IX(i, j, 0)] = b == 3 ? -x[IX(i, j, 1)] : x[IX(i, j, 1)];
 //			x[IX(i, j, N - 1)] = b == 3 ? -x[IX(i, j, N - 2)] : x[IX(i, j, N - 2)];
 //		}
 //	}
-//	for (int k = 1; k < N - 1; k++) {
-//		for (int i = 1; i < N - 1; i++) {
+//	for (int k = 1; k < N - 1; ++k) {
+//		for (int i = 1; i < N - 1; ++i) {
 //			x[IX(i, 0, k)] = b == 2 ? -x[IX(i, 1, k)] : x[IX(i, 1, k)];
 //			x[IX(i, N - 1, k)] = b == 2 ? -x[IX(i, N - 2, k)] : x[IX(i, N - 2, k)];
 //		}
 //	}
-//	for (int k = 1; k < N - 1; k++) {
-//		for (int j = 1; j < N - 1; j++) {
+//	for (int k = 1; k < N - 1; ++k) {
+//		for (int j = 1; j < N - 1; ++j) {
 //			x[IX(0, j, k)] = b == 1 ? -x[IX(1, j, k)] : x[IX(1, j, k)];
 //			x[IX(N - 1, j, k)] = b == 1 ? -x[IX(N - 2, j, k)] : x[IX(N - 2, j, k)];
 //		}
@@ -623,20 +613,20 @@ void wind_field::set_bnd(int b, float* x)
 //
 //void wind_field::set_bnd(int b, float* x)
 //{
-//	for (int j = 1; j < N - 1; j++) {
-//		for (int i = 1; i < N - 1; i++) {
+//	for (int j = 1; j < N - 1; ++j) {
+//		for (int i = 1; i < N - 1; ++i) {
 //			x[IX(i, j, 0)] = b == 3 ? -x[IX(i, j, 1)] : x[IX(i, j, 1)];
 //			x[IX(i, j, N - 1)] = b == 3 ? -x[IX(i, j, N - 2)] : x[IX(i, j, N - 2)];
 //		}
 //	}
-//	for (int k = 1; k < N - 1; k++) {
-//		for (int i = 1; i < N - 1; i++) {
+//	for (int k = 1; k < N - 1; ++k) {
+//		for (int i = 1; i < N - 1; ++i) {
 //			x[IX(i, 0, k)] = b == 2 ? -x[IX(i, 1, k)] : x[IX(i, 1, k)];
 //			x[IX(i, N - 1, k)] = b == 2 ? -x[IX(i, N - 2, k)] : x[IX(i, N - 2, k)];
 //		}
 //	}
-//	for (int k = 1; k < N - 1; k++) {
-//		for (int j = 1; j < N - 1; j++) {
+//	for (int k = 1; k < N - 1; ++k) {
+//		for (int j = 1; j < N - 1; ++j) {
 //			x[IX(0, j, k)] = b == 1 ? -x[IX(1, j, k)] : x[IX(1, j, k)];
 //			x[IX(N - 1, j, k)] = b == 1 ? -x[IX(N - 2, j, k)] : x[IX(N - 2, j, k)];
 //		}
@@ -667,3 +657,29 @@ void wind_field::set_bnd(int b, float* x)
 //		+ x[IX(N - 1, N - 2, N - 1)]
 //		+ x[IX(N - 1, N - 1, N - 2)]);
 //}
+
+	// ___________________________________		ITEMS __________________________________________________//
+	//vec = vec3(N, N, N);// setup
+	//mv = view;
+
+	//mv = translate(mv, vec3(-N / 2, 0, -N / 2));	 // translate
+	//mv = mv * orientation(normalize(vec), vec3(0, 0, 1));		// rotation
+	//mv = scale(mv, vec3(0.1, 0.1, length(vec)));				// scale
+
+	//glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(mv));
+	//drawCylinder();
+
+	// ___________________________________		ITEMS idk __________________________________________________//
+	//float x = w_field->Vy[IX(0, 0, 0)];
+	//cout << x;
+
+
+	//_________________________		Wind  testing      _________________________________________________//
+	//vec = vec3(3, 5, 5); // setup
+	//mv = view;
+
+	//mv = mv * orientation(normalize(vec), vec3(0, 0, 1));	// direction
+	//mv = scale(mv, vec3(1, 1, length(vec)));				 // strength
+
+	//glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(mv));
+	//drawCone();
