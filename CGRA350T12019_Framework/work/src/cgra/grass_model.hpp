@@ -1,5 +1,7 @@
 #pragma once
 
+// ERROR: UNUSED
+
 // std
 #include <iostream>
 #include <string>
@@ -26,6 +28,12 @@
 
 // TODO: make grass a namespace?
 
+/*struct grass_blade {
+	std::vector<glm::vec3> control_points;
+	cgra::gl_mesh curve;
+	cgra::gl_mesh spline;
+};*/
+
 class grass_model {
 private:
 	// four control points
@@ -46,9 +54,11 @@ public:
 	void setControlPoints(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3);
 	cgra::gl_mesh getSpline();
 	cgra::gl_mesh getCurve();
+	void setSpline();
+	void setCurve();
 
 	// drawing and rendering
-	void drawPolyline();
-	void drawCurve();
+	void drawPolyline(const glm::mat4& view, const glm::mat4 proj);
+	void drawCurve(const glm::mat4& view, const glm::mat4 proj);
 	glm::vec3 interpolate(float t);
 };

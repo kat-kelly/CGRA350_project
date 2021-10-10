@@ -1,3 +1,5 @@
+// ERROR: UNUSED
+
 #include "grass_model.hpp"
 #include "grass_model.hpp"
 
@@ -41,11 +43,10 @@ gl_mesh grass_model::getCurve() {
 	return curve;
 }
 
-// drawing and rendering
-void grass_model::drawPolyline() {
+void grass_model::setSpline() {
 	// set spline
 	mesh_builder mb = mesh_builder();
-	vec3[] cp = getControlPoints();
+	vec3 cp[] = getControlPoints();
 	for (int i = 0; i < 4; i++) {
 		mesh_vertex mv;
 		mv.pos = cp[i];
@@ -53,22 +54,37 @@ void grass_model::drawPolyline() {
 		mb.push_index(i);
 	}
 	spline = mb.build();
+}
+
+void grass_model::setCurve() {
+
+}
+
+// drawing and rendering
+void grass_model::drawPolyline(const glm::mat4& view, const glm::mat4 proj) {
 	//spline.color = vec3(1, 0, 0);
 	//spline.mesh.mode = GL_LINE_STRIP;
+
+	/*mat4 modelview = view;
+
+	glUseProgram(shader); // load shader and variables
+	glUniformMatrix4fv(glGetUniformLocation(shader, "uProjectionMatrix"), 1, false, value_ptr(proj));
+	glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(modelview));
+	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(color));*/
 
 	// TODO: draw spline
 	spline.draw();
 }
 
-void grass_model::drawCurve() {
+void grass_model::drawCurve(const glm::mat4& view, const glm::mat4 proj) {
 	// TODO: draw control points
 	// TODO: draw straight lines between control points (in red?)
 }
 
 glm::vec3 grass_model::interpolate(float t) {
 	// 0 <= t <= 1
-	return pow((1 - t), 3) * control_point0
-		+ 3 * t * pow((1 - t), 2) * control_point1
-		+ 3 * pow(t, 2) * (1 - t) * control_point2
-		+ pow(t, 3) * control_point3
+	return pow((1.0f - t), 3.0f) * control_point0
+		+ 3.0f * t * pow((1.0f - t), 2.0f) * control_point1
+		+ 3.0f * pow(t, 2.0f) * (1.0f - t) * control_point2
+		+ pow(t, 3.0f) * control_point3; // FIXME: cant use * for vec3
 }
