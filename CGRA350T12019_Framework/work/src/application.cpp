@@ -29,7 +29,6 @@ void basic_model::draw(const glm::mat4 &view, const glm::mat4 proj) {
 	glUniformMatrix4fv(glGetUniformLocation(shader, "uProjectionMatrix"), 1, false, value_ptr(proj));
 	glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(modelview));
 	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(color));
-
 	mesh.draw(); // draw
 }
 
@@ -80,7 +79,8 @@ void Application::render() {
 
 
 	// draw the model
-	m_model.draw(view, proj);
+	// m_model.draw(view, proj);
+	w_model.draw(view,proj);
 }
 
 
@@ -113,6 +113,12 @@ void Application::renderGUI() {
 	if (ImGui::InputFloat("example input", &exampleInput)) {
 		cout << "example input changed to " << exampleInput << endl;
 	}
+
+	ImGui::Separator();
+	ImGui::SliderFloat("Wind", &m_yaw, -pi<float>(), pi<float>(), "%.2f");
+
+
+
 
 	// finish creating window
 	ImGui::End();
