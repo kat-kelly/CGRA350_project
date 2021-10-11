@@ -9,6 +9,7 @@
 #include "opengl.hpp"
 #include "cgra/cgra_mesh.hpp"
 #include "skeleton_model.hpp"
+#include "wind_model.hpp"
 //#include "cgra/grass_model.hpp"
 
 
@@ -45,7 +46,7 @@ struct grass_model {
 class Application {
 private:
 	// window
-	glm::vec2 m_windowsize;
+	glm::vec2 m_windowsize = glm::vec2(10,10);
 	GLFWwindow *m_window;
 
 	// oribital camera
@@ -55,13 +56,16 @@ private:
 
 	// last input
 	bool m_leftMouseDown = false;
-	glm::vec2 m_mousePosition;
+	glm::vec2 m_mousePosition = glm::vec2(0,0);
 
 	// drawing flags
-	bool m_show_axis = false;
-	bool m_show_grid = false;
+	bool m_show_axis = true;
+	bool m_show_grid = true;
 	bool m_showWireframe = false;
 
+	// geometry
+	basic_model m_model;
+	wind_model w_model;
 	//basic_model m_model;
 	grass_model grass;// = grass_model(glm::vec3(0, 0, 0), glm::vec3(1, 1, 0), glm::vec3(0, 2, 0), glm::vec3(0, 3, 0));
 

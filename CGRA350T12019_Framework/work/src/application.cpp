@@ -23,14 +23,14 @@ using namespace cgra;
 using namespace glm;
 
 
+
 void basic_model::draw(const glm::mat4 &view, const glm::mat4 proj) { // UNUSED
 	mat4 modelview = view * modelTransform;
-	
+
 	glUseProgram(shader); // load shader and variables
 	glUniformMatrix4fv(glGetUniformLocation(shader, "uProjectionMatrix"), 1, false, value_ptr(proj));
 	glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(modelview));
 	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(color));
-
 	mesh.draw(); // draw
 }
 
@@ -97,10 +97,10 @@ vec3 grass_model::interpolateBezier(float t) {
 		+ pow(t, 3.0f) * controlPts[3];
 }
 
-Application::Application(GLFWwindow *window) : m_window(window) {
-	
+Application::Application(GLFWwindow* window) : m_window(window) {
+
 	shader_builder sb;
-    sb.set_shader(GL_VERTEX_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_vert.glsl"));
+	sb.set_shader(GL_VERTEX_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_vert.glsl"));
 	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
 	GLuint shader = sb.build();
 
@@ -112,20 +112,20 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 
 
 void Application::render() {
-	
+
 	// retrieve the window hieght
 	int width, height;
-	glfwGetFramebufferSize(m_window, &width, &height); 
+	glfwGetFramebufferSize(m_window, &width, &height);
 
 	m_windowsize = vec2(width, height); // update window size
 	glViewport(0, 0, width, height); // set the viewport to draw to the entire window
 
 	// clear the back-buffer
 	glClearColor(0.3f, 0.3f, 0.4f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// enable flags for normal/forward rendering
-	glEnable(GL_DEPTH_TEST); 
+	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
 	// projection matrix
@@ -134,13 +134,16 @@ void Application::render() {
 	// view matrix
 	mat4 view = translate(mat4(1), vec3(0, 0, -m_distance))
 		* rotate(mat4(1), m_pitch, vec3(1, 0, 0))
-		* rotate(mat4(1), m_yaw,   vec3(0, 1, 0));
+		* rotate(mat4(1), m_yaw, vec3(0, 1, 0));
 
 
 	// helpful draw options
 	if (m_show_grid) drawGrid(view, proj);
 	if (m_show_axis) drawAxis(view, proj);
 	glPolygonMode(GL_FRONT_AND_BACK, (m_showWireframe) ? GL_LINE : GL_FILL);
+  
+  // wind
+  w_model.run(view, proj);
 
 	// draw grass blade
 	grass.drawSpline(view, proj);
@@ -186,14 +189,27 @@ void Application::renderGUI() {
 	ImGui::SameLine();
 	if (ImGui::Button("Screenshot")) rgba_image::screenshot(true);
 
-	
+	ImGui::Separator();
+	ImGui::Text("Wind settings");
+	if (ImGui::RadioButton("Panic button", w_model.display == -1)) {
+		w_model.display = -1;
+
+		wind_model* d = &w_model;
+		wind_model m = wind_model();
+		w_model = m;
+		delete& d;
+		delete d;
+	}
+	if (ImGui::RadioButton("Off", w_model.display == 0)) w_model.display = 0;	ImGui::SameLine();
+	if (ImGui::RadioButton("On", w_model.display == 1)) w_model.display = 1;	ImGui::SameLine();
+	if (ImGui::RadioButton("Visualize", w_model.display == 2)) w_model.display = 2;
+	if (w_model.display > 0) {
+		ImGui::SliderFloat("Wind Strength", &w_model.w_strength, 0, 5, "%.1f");
+		ImGui::SliderFloat("Wind Yaw", &w_model.w_angle, -20, 20, "%.1f");
+		ImGui::SliderFloat("Wind Pulse", &w_model.pulse, 0.0, 0.05, "%.2f");
+	}
 	ImGui::Separator();
 
-	// example of how to use input boxes
-	static float exampleInput;
-	if (ImGui::InputFloat("example input", &exampleInput)) {
-		cout << "example input changed to " << exampleInput << endl;
-	}
 
 	// finish creating window
 	ImGui::End();
