@@ -105,30 +105,26 @@ void Application::renderGUI() {
 	ImGui::SameLine();
 	if (ImGui::Button("Screenshot")) rgba_image::screenshot(true);
 
-
-	ImGui::Separator();
-
-	// example of how to use input boxes
-	static float exampleInput;
-	if (ImGui::InputFloat("example input", &exampleInput)) {
-		cout << "example input changed to " << exampleInput << endl;
-	}
-
-
 	ImGui::Separator();
 	ImGui::Text("Wind settings");
+	if (ImGui::RadioButton("Panic button", w_model.display == -1)) {
+		w_model.display = -1;
+
+		wind_model* d = &w_model;
+		wind_model m = wind_model();
+		w_model = m;
+		delete& d;
+		delete d;
+	}
 	if (ImGui::RadioButton("Off", w_model.display == 0)) w_model.display = 0;	ImGui::SameLine();
 	if (ImGui::RadioButton("On", w_model.display == 1)) w_model.display = 1;	ImGui::SameLine();
 	if (ImGui::RadioButton("Visualize", w_model.display == 2)) w_model.display = 2;
 	if (w_model.display > 0) {
-		ImGui::SliderFloat("Wind Strength", &w_model.w_strength, 0,5, "%.1f");
-		ImGui::SliderFloat("Wind Yaw", &w_model.w_angle,-20, 20, "%.1f");
+		ImGui::SliderFloat("Wind Strength", &w_model.w_strength, 0, 5, "%.1f");
+		ImGui::SliderFloat("Wind Yaw", &w_model.w_angle, -20, 20, "%.1f");
 		ImGui::SliderFloat("Wind Pulse", &w_model.pulse, 0.0, 0.05, "%.2f");
-
 	}
 	ImGui::Separator();
-
-
 
 
 	// finish creating window

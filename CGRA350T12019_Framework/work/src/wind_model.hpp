@@ -54,9 +54,9 @@ private:
 	float S = 1;
 
 	// fields parameter
-	int N = 14;
-	float visc = 0.1;
-	float diff = 0;
+	int N = 16;
+	float visc = 0.0000001;
+	float diff = 0.001;
 	float d_time = 0.05;
 
 	//sim speed
@@ -82,7 +82,7 @@ public:
 	int display = 0;
 
 	float w_angle = 0;
-	float w_strength = 1;
+	float w_strength = 0.1;
 	float pulse = 0;
 
 	// Setup
