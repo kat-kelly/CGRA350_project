@@ -15,6 +15,7 @@
 #include "cgra/cgra_image.hpp"
 #include "cgra/cgra_shader.hpp"
 #include "cgra/cgra_wavefront.hpp"
+//#include "cgra/grass_model.hpp"
 
 
 using namespace std;
@@ -22,7 +23,8 @@ using namespace cgra;
 using namespace glm;
 
 
-void basic_model::draw(const glm::mat4& view, const glm::mat4 proj) {
+
+void basic_model::draw(const glm::mat4 &view, const glm::mat4 proj) { // UNUSED
 	mat4 modelview = view * modelTransform;
 
 	glUseProgram(shader); // load shader and variables
@@ -32,6 +34,68 @@ void basic_model::draw(const glm::mat4& view, const glm::mat4 proj) {
 	mesh.draw(); // draw
 }
 
+// grass model methods
+void grass_model::drawSpline(const glm::mat4& view, const glm::mat4 proj) {
+	mat4 modelview = view * modelTransform;
+
+	glUseProgram(shader); // load shader and variables
+	glUniformMatrix4fv(glGetUniformLocation(shader, "uProjectionMatrix"), 1, false, value_ptr(proj));
+	glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(modelview));
+	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(1,0,0))); // color is red
+
+	spline_mesh.draw(); // draw
+}
+
+void grass_model::drawCurve(const glm::mat4& view, const glm::mat4 proj) {
+	mat4 modelview = view * modelTransform;
+
+	glUseProgram(shader); // load shader and variables
+	glUniformMatrix4fv(glGetUniformLocation(shader, "uProjectionMatrix"), 1, false, value_ptr(proj));
+	glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(modelview));
+	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(0,1,0))); // color is green
+
+	curve_mesh.draw(); // draw
+}
+
+void grass_model::setMeshes(GLuint shad) {
+	// spline mesh
+	mesh_builder mb_spline = mesh_builder();
+	for (int i = 0; i < 4; i++) {
+		mesh_vertex mv;
+		mv.pos = controlPts[i];
+		mv.norm = vec3(1, 0, 0);
+		mb_spline.push_vertex(mv);
+		mb_spline.push_index(i);
+	}
+	mb_spline.mode = GL_LINE_STRIP;
+	spline_mesh = mb_spline.build();
+
+	// curve mesh
+	mesh_builder mb_curve = mesh_builder();
+	int count = 0;
+	for (float i = 0; i <= 1; i = i + 0.2) {
+		mesh_vertex mv;
+		mv.pos = interpolateBezier(i);
+		mv.norm = vec3(1, 0, 0);
+		mb_curve.push_vertex(mv);
+		mb_curve.push_index(count);
+		count++;
+	}
+	mb_curve.mode = GL_LINE_STRIP;
+	curve_mesh = mb_curve.build();
+	shader = shad;
+}
+
+void grass_model::setControlPts(vec3 cp[4]) {
+	*controlPts = *cp;
+}
+
+vec3 grass_model::interpolateBezier(float t) {
+	return pow((1.0f - t), 3.0f) * controlPts[0]
+		+ 3.0f * t * pow((1.0f - t), 2.0f) * controlPts[1]
+		+ 3.0f * pow(t, 2.0f) * (1.0f - t) * controlPts[2]
+		+ pow(t, 3.0f) * controlPts[3];
+}
 
 Application::Application(GLFWwindow* window) : m_window(window) {
 
@@ -40,9 +104,10 @@ Application::Application(GLFWwindow* window) : m_window(window) {
 	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
 	GLuint shader = sb.build();
 
-	m_model.shader = shader;
-	m_model.mesh = load_wavefront_data(CGRA_SRCDIR + std::string("/res//assets//teapot.obj")).build();
-	m_model.color = vec3(1, 0, 0);
+	// set up grass blade
+	vec3 arr[4] = { vec3(0, 0, 0), vec3(1, 1, 0), vec3(1, 2, 0), vec3(0, 3, 0) }; // new control points
+	grass.setControlPts(arr);
+	grass.setMeshes(shader);
 }
 
 
@@ -76,11 +141,30 @@ void Application::render() {
 	if (m_show_grid) drawGrid(view, proj);
 	if (m_show_axis) drawAxis(view, proj);
 	glPolygonMode(GL_FRONT_AND_BACK, (m_showWireframe) ? GL_LINE : GL_FILL);
+  
+  // wind
+  w_model.run(view, proj);
 
+	// draw grass blade
+	grass.drawSpline(view, proj);
+	grass.drawCurve(view, proj);
+}
 
-	// draw the model
-	// m_model.draw(view, proj);
-	w_model.run(view, proj);
+basic_model Application::meshToModel(gl_mesh mesh) { // UNUSED
+	basic_model model;
+	model.mesh = mesh;
+	model.color = vec3(1, 0, 0); // TODO: make changable
+	return model;
+}
+
+// added methods
+basic_model Application::toRenderMesh(grass_model grass_blade) { // UNUSED
+	// TODO: determine level of detail for this grass blade
+	// TODO: construct mesh from line segments
+	basic_model grass_bm;
+	//grass.mesh = grass_blade.
+	//grass.color = vec3(0, 1, 0);
+	return grass_bm;
 }
 
 

@@ -10,6 +10,7 @@
 #include "cgra/cgra_mesh.hpp"
 #include "skeleton_model.hpp"
 #include "wind_model.hpp"
+//#include "cgra/grass_model.hpp"
 
 
 // Basic model that holds the shader, mesh and transform for drawing.
@@ -25,6 +26,20 @@ struct basic_model {
 	void draw(const glm::mat4 &view, const glm::mat4 proj);
 };
 
+struct grass_model {
+	GLuint shader = 0;
+	cgra::gl_mesh spline_mesh;
+	cgra::gl_mesh curve_mesh;
+	glm::vec3 color{ 0.7 };
+	glm::mat4 modelTransform{ 1.0 };
+	glm::vec3 controlPts[4]{ glm::vec3(0, 0, 0), glm::vec3(1, 1, 0), glm::vec3(1, 2, 0), glm::vec3(0, 3, 0) }; // FIXME: make changable
+
+	void drawSpline(const glm::mat4& view, const glm::mat4 proj);
+	void drawCurve(const glm::mat4& view, const glm::mat4 proj);
+	void setControlPts(glm::vec3 cp[4]);
+	void setMeshes(GLuint shader);
+	glm::vec3 interpolateBezier(float t);
+};
 
 // Main application class
 //
@@ -51,6 +66,8 @@ private:
 	// geometry
 	basic_model m_model;
 	wind_model w_model;
+	//basic_model m_model;
+	grass_model grass;// = grass_model(glm::vec3(0, 0, 0), glm::vec3(1, 1, 0), glm::vec3(0, 2, 0), glm::vec3(0, 3, 0));
 
 public:
 	// setup
@@ -70,4 +87,8 @@ public:
 	void scrollCallback(double xoffset, double yoffset);
 	void keyCallback(int key, int scancode, int action, int mods);
 	void charCallback(unsigned int c);
+
+	// convert grass model into basic model
+	basic_model meshToModel(cgra::gl_mesh mesh);
+	basic_model toRenderMesh(grass_model blade);
 };

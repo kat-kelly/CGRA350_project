@@ -1,0 +1,35 @@
+{
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target"
+		],
+		"files" : 
+		[
+			"res/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 8,
+				"parent" : 0
+			}
+		]
+	},
+	"id" : "res::@a6dcd4b96501b4d6d326",
+	"name" : "res",
+	"paths" : 
+	{
+		"build" : "res",
+		"source" : "res"
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}
