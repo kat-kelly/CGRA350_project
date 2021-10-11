@@ -23,7 +23,7 @@ using namespace cgra;
 using namespace glm;
 
 
-void basic_model::draw(const glm::mat4 &view, const glm::mat4 proj) {
+void basic_model::draw(const glm::mat4 &view, const glm::mat4 proj) { // UNUSED
 	mat4 modelview = view * modelTransform;
 	
 	glUseProgram(shader); // load shader and variables
@@ -57,8 +57,37 @@ void grass_model::drawCurve(const glm::mat4& view, const glm::mat4 proj) {
 	curve_mesh.draw(); // draw
 }
 
-void grass_model::setControlPts(vec3 cp[]) {
-	//controlPts = cp; // FIXME: expression must be modifiable Ivalue
+void grass_model::setMeshes(GLuint shad) {
+	// spline mesh
+	mesh_builder mb_spline = mesh_builder();
+	for (int i = 0; i < 4; i++) {
+		mesh_vertex mv;
+		mv.pos = controlPts[i];
+		mv.norm = vec3(1, 0, 0);
+		mb_spline.push_vertex(mv);
+		mb_spline.push_index(i);
+	}
+	mb_spline.mode = GL_LINE_STRIP;
+	spline_mesh = mb_spline.build();
+
+	// curve mesh
+	mesh_builder mb_curve = mesh_builder();
+	int count = 0;
+	for (float i = 0; i <= 1; i = i + 0.2) {
+		mesh_vertex mv;
+		mv.pos = interpolateBezier(i);
+		mv.norm = vec3(1, 0, 0);
+		mb_curve.push_vertex(mv);
+		mb_curve.push_index(count);
+		count++;
+	}
+	mb_curve.mode = GL_LINE_STRIP;
+	curve_mesh = mb_curve.build();
+	shader = shad;
+}
+
+void grass_model::setControlPts(vec3 cp[4]) {
+	*controlPts = *cp;
 }
 
 vec3 grass_model::interpolateBezier(float t) {
@@ -75,30 +104,10 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
 	GLuint shader = sb.build();
 
-	// set up grass blade // TODO: put in method
-	//grass.controlPts = { glm::vec3(0, 0, 0), glm::vec3(1, 1, 0), glm::vec3(1, 2, 0), glm::vec3(0, 3, 0) };
-	vec3 cp[] = { glm::vec3(0, 0, 0), glm::vec3(1, 1, 0), glm::vec3(1, 2, 0), glm::vec3(0, 3, 0) }; // FIXME: use grass control points
-	// spline mesh
-	mesh_builder mb_spline = mesh_builder();
-	for (int i = 0; i < 4; i++) {
-		mesh_vertex mv;
-		mv.pos = cp[i];
-		mb_spline.push_vertex(mv);
-		mb_spline.push_index(i);
-	}
-	mb_spline.mode = GL_LINE_STRIP;
-	grass.spline_mesh = mb_spline.build();
-	// curve mesh
-	mesh_builder mb_curve = mesh_builder();
-	for (int i = 0; i < 4; i++) {
-		mesh_vertex mv;
-		mv.pos = cp[i];
-		mb_curve.push_vertex(mv);
-		mb_curve.push_index(i);
-	}
-	mb_curve.mode = GL_LINE_STRIP;
-	grass.curve_mesh = mb_curve.build();
-	grass.shader = shader;
+	// set up grass blade
+	vec3 arr[4] = { vec3(0, 0, 0), vec3(1, 1, 0), vec3(1, 2, 0), vec3(0, 3, 0) }; // new control points
+	grass.setControlPts(arr);
+	grass.setMeshes(shader);
 }
 
 
@@ -135,6 +144,7 @@ void Application::render() {
 
 	// draw grass blade
 	grass.drawSpline(view, proj);
+	grass.drawCurve(view, proj);
 }
 
 basic_model Application::meshToModel(gl_mesh mesh) { // UNUSED

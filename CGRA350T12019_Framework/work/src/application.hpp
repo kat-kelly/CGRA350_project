@@ -31,11 +31,12 @@ struct grass_model {
 	cgra::gl_mesh curve_mesh;
 	glm::vec3 color{ 0.7 };
 	glm::mat4 modelTransform{ 1.0 };
-	glm::vec3 controlPts[4];// = { glm::vec3(0, 0, 0), glm::vec3(1, 1, 0), glm::vec3(1, 2, 0), glm::vec3(0, 3, 0) }; // FIXME: make changable
+	glm::vec3 controlPts[4]{ glm::vec3(0, 0, 0), glm::vec3(1, 1, 0), glm::vec3(1, 2, 0), glm::vec3(0, 3, 0) }; // FIXME: make changable
 
 	void drawSpline(const glm::mat4& view, const glm::mat4 proj);
 	void drawCurve(const glm::mat4& view, const glm::mat4 proj);
 	void setControlPts(glm::vec3 cp[4]);
+	void setMeshes(GLuint shader);
 	glm::vec3 interpolateBezier(float t);
 };
 
