@@ -26,16 +26,19 @@ struct basic_model {
 	void draw(const glm::mat4 &view, const glm::mat4 proj);
 };
 
-struct grass_model {
+// Grass model struct by Katrina
+struct grass_model { // TODO: store in vbo
+	float lod = 10;
 	GLuint shader = 0;
 	cgra::gl_mesh spline_mesh;
 	cgra::gl_mesh curve_mesh;
 	glm::vec3 color{ 0.7 };
 	glm::mat4 modelTransform{ 1.0 };
-	glm::vec3 controlPts[4]{ glm::vec3(0, 0, 0), glm::vec3(1, 1, 0), glm::vec3(1, 2, 0), glm::vec3(0, 3, 0) }; // FIXME: make changable
+	glm::vec3 controlPts[4]{ glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0) }; // FIXME: make changable
 
 	void drawSpline(const glm::mat4& view, const glm::mat4 proj);
 	void drawCurve(const glm::mat4& view, const glm::mat4 proj);
+	void drawBlade(const glm::mat4& view, const glm::mat4 proj, glm::vec3 camPos);
 	void setControlPts(glm::vec3 cp[4]);
 	void setMeshes(GLuint shader);
 	glm::vec3 interpolateBezier(float t);
@@ -67,11 +70,18 @@ private:
 	basic_model m_model;
 	wind_model w_model;
 	//basic_model m_model;
-	grass_model grass;// = grass_model(glm::vec3(0, 0, 0), glm::vec3(1, 1, 0), glm::vec3(0, 2, 0), glm::vec3(0, 3, 0));
+	std::vector<grass_model> grass_patch; // changable vector that holds multiple grass blades
+	//grass_model grass; // TODO: remove and use vector above instead
+
+	// rendering
+	int blade_count = 1;
 
 public:
 	// setup
 	Application(GLFWwindow *);
+
+	// setup or resetup grass patch
+	void setGrass();
 
 	// disable copy constructors (for safety)
 	Application(const Application&) = delete;
@@ -87,8 +97,4 @@ public:
 	void scrollCallback(double xoffset, double yoffset);
 	void keyCallback(int key, int scancode, int action, int mods);
 	void charCallback(unsigned int c);
-
-	// convert grass model into basic model
-	basic_model meshToModel(cgra::gl_mesh mesh);
-	basic_model toRenderMesh(grass_model blade);
 };

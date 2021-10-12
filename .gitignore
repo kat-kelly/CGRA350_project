@@ -30,6 +30,7 @@
 *.exe
 *.out
 *.app
+<<<<<<< Updated upstream
 
 # Dingye
 .vs/
@@ -37,3 +38,27 @@
 /CGRA350T12019_Framework/build/
 /CGRA350T12019_Framework/work/out/
 *.DS_store
+=======
+CGRA350T12019_Framework/build/.vs/CGRA_PROJECT_base/v16/Browse.VC.db
+*.db
+*.db-shm
+*.db
+*.db-wal
+*.ipch
+*.pdb
+*.recipe
+*.vcxproj
+*.db
+*.tlog
+*.log
+*.tlog
+CGRA350T12019_Framework/build/src/base.dir/Debug/base.tlog/unsuccessfulbuild
+*.pdb
+*.filters
+*.ini
+*.tlog
+*.vcxproj
+CGRA350T12019_Framework/build/.vs/CGRA_PROJECT_base/v16/.suo
+*.ilk
+*.tlog
+>>>>>>> Stashed changes

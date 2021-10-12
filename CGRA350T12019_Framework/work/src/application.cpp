@@ -34,7 +34,7 @@ void basic_model::draw(const glm::mat4 &view, const glm::mat4 proj) { // UNUSED
 	mesh.draw(); // draw
 }
 
-// grass model methods
+// grass model methods by Katrina
 void grass_model::drawSpline(const glm::mat4& view, const glm::mat4 proj) {
 	mat4 modelview = view * modelTransform;
 
@@ -46,7 +46,7 @@ void grass_model::drawSpline(const glm::mat4& view, const glm::mat4 proj) {
 	spline_mesh.draw(); // draw
 }
 
-void grass_model::drawCurve(const glm::mat4& view, const glm::mat4 proj) {
+void grass_model::drawCurve(const glm::mat4& view, const glm::mat4 proj) { // TODO: get LOD from distance
 	mat4 modelview = view * modelTransform;
 
 	glUseProgram(shader); // load shader and variables
@@ -57,15 +57,31 @@ void grass_model::drawCurve(const glm::mat4& view, const glm::mat4 proj) {
 	curve_mesh.draw(); // draw
 }
 
-void grass_model::setMeshes(GLuint shad) {
+void grass_model::drawBlade(const glm::mat4& view, const glm::mat4 proj, glm::vec3 camera) {
+	mat4 modelview = view * modelTransform;
+
+	glUseProgram(shader); // load shader and variables
+	glUniformMatrix4fv(glGetUniformLocation(shader, "uProjectionMatrix"), 1, false, value_ptr(proj));
+	glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(modelview));
+	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(0, 1, 0))); // color is green
+	// shaders added by Katrina
+	//glUniform3fv(glGetUniformLocation(shader, "cameraPos"), 1, value_ptr(vec4(camera, 0))); // tessellation control
+
+	// TODO: change to modified mesh
+	curve_mesh.draw(); // draw
+}
+
+void grass_model::setMeshes(GLuint shad) { // TODO: make more heirarchical?
 	// spline mesh
 	mesh_builder mb_spline = mesh_builder();
+	vec3 parentTrans = vec3(0); // heirarchical
 	for (int i = 0; i < 4; i++) {
 		mesh_vertex mv;
-		mv.pos = controlPts[i];
+		mv.pos = parentTrans + controlPts[i];
 		mv.norm = vec3(1, 0, 0);
 		mb_spline.push_vertex(mv);
 		mb_spline.push_index(i);
+		parentTrans = parentTrans + controlPts[i];
 	}
 	mb_spline.mode = GL_LINE_STRIP;
 	spline_mesh = mb_spline.build();
@@ -73,7 +89,7 @@ void grass_model::setMeshes(GLuint shad) {
 	// curve mesh
 	mesh_builder mb_curve = mesh_builder();
 	int count = 0;
-	for (float i = 0; i <= 1; i = i + 0.2) {
+	for (float i = 0; i <= 1; i = i + (1/lod)) {
 		mesh_vertex mv;
 		mv.pos = interpolateBezier(i);
 		mv.norm = vec3(1, 0, 0);
@@ -91,23 +107,65 @@ void grass_model::setControlPts(vec3 cp[4]) {
 }
 
 vec3 grass_model::interpolateBezier(float t) {
-	return pow((1.0f - t), 3.0f) * controlPts[0]
-		+ 3.0f * t * pow((1.0f - t), 2.0f) * controlPts[1]
-		+ 3.0f * pow(t, 2.0f) * (1.0f - t) * controlPts[2]
-		+ pow(t, 3.0f) * controlPts[3];
+	// heirarchical
+	vec3 p0 = controlPts[0];
+	vec3 p1 = p0 + controlPts[1];
+	vec3 p2 = p1 + controlPts[2];
+	vec3 p3 = p2 + controlPts[3];
+	return pow((1.0f - t), 3.0f) * p0
+		+ 3.0f * t * pow((1.0f - t), 2.0f) * p1
+		+ 3.0f * pow(t, 2.0f) * (1.0f - t) * p2
+		+ pow(t, 3.0f) * p3;
 }
 
 Application::Application(GLFWwindow* window) : m_window(window) {
-
+	/*
+	// set shaders
 	shader_builder sb;
 	sb.set_shader(GL_VERTEX_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_vert.glsl"));
+	// added shaders by Katrina
+	//sb.set_shader(GL_TESS_CONTROL_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_control.glsl"));
+	//sb.set_shader(GL_TESS_EVALUATION_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_eval.glsl"));
+	//sb.set_shader(GL_GEOMETRY_SHADER, CGRA_SRCDIR + std::string("//res//shaders//geometry.glsl"));
+	//
+	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
+	GLuint shader = sb.build();*/
+
+	setGrass();
+}
+
+void Application::setGrass()
+{
+	// set shaders
+	shader_builder sb;
+	sb.set_shader(GL_VERTEX_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_vert.glsl"));
+	// added shaders by Katrina
+	//sb.set_shader(GL_TESS_CONTROL_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_control.glsl"));
+	//sb.set_shader(GL_TESS_EVALUATION_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_eval.glsl"));
+	//sb.set_shader(GL_GEOMETRY_SHADER, CGRA_SRCDIR + std::string("//res//shaders//geometry.glsl"));
+	//
 	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
 	GLuint shader = sb.build();
 
-	// set up grass blade
-	vec3 arr[4] = { vec3(0, 0, 0), vec3(1, 1, 0), vec3(1, 2, 0), vec3(0, 3, 0) }; // new control points
-	grass.setControlPts(arr);
-	grass.setMeshes(shader);
+	// clear existing patch
+	grass_patch.clear();
+
+	// set up grass blade/s
+	vec3 arr[4] = { vec3(0, 0, 0), vec3(0, 1, 0), vec3(0, 1, 0), vec3(0, 1, 0) }; // grass blade in center
+	grass_model centerBlade;
+	centerBlade.setControlPts(arr);
+	centerBlade.setMeshes(shader);
+	grass_patch.push_back(centerBlade);
+
+	// set up the rest of the patch
+	for (int i = 1; i < blade_count; i++) {
+		// create random location for blade
+		vec3 cp[4] = { vec3(rand() % 20 - 10, 0, rand() % 20 - 10), vec3(0, 1, 0), vec3(0, 1, 0), vec3(0, 1, 0) };
+		grass_model grass;
+		grass.setControlPts(cp);
+		grass.setMeshes(shader);
+		grass_patch.push_back(grass);
+	}
 }
 
 
@@ -142,29 +200,17 @@ void Application::render() {
 	if (m_show_axis) drawAxis(view, proj);
 	glPolygonMode(GL_FRONT_AND_BACK, (m_showWireframe) ? GL_LINE : GL_FILL);
   
-  // wind
-  w_model.run(view, proj);
+	// wind
+	w_model.run(view, proj);
 
-	// draw grass blade
-	grass.drawSpline(view, proj);
-	grass.drawCurve(view, proj);
-}
-
-basic_model Application::meshToModel(gl_mesh mesh) { // UNUSED
-	basic_model model;
-	model.mesh = mesh;
-	model.color = vec3(1, 0, 0); // TODO: make changable
-	return model;
-}
-
-// added methods
-basic_model Application::toRenderMesh(grass_model grass_blade) { // UNUSED
-	// TODO: determine level of detail for this grass blade
-	// TODO: construct mesh from line segments
-	basic_model grass_bm;
-	//grass.mesh = grass_blade.
-	//grass.color = vec3(0, 1, 0);
-	return grass_bm;
+	for (int i = 0; i < grass_patch.size(); i++) {
+		grass_model grass = grass_patch.at(i);
+		// draw grass blade
+		grass.drawSpline(view, proj);
+		grass.drawCurve(view, proj);
+		vec3 camera_position = vec3((m_distance * cos(m_pitch) * cos(m_yaw)), (m_distance * cos(m_pitch) * sin(m_yaw)), (m_distance * sin(m_pitch)));
+		//grass.drawBlade(view, proj, camera_position);
+	}
 }
 
 
@@ -188,6 +234,12 @@ void Application::renderGUI() {
 	ImGui::Checkbox("Wireframe", &m_showWireframe);
 	ImGui::SameLine();
 	if (ImGui::Button("Screenshot")) rgba_image::screenshot(true);
+
+	// add or decrease number of grass blades
+	if (ImGui::SliderInt("Grass blades", &blade_count, 1, 100)) {
+		// update grass patch vector
+		setGrass(); // TODO: only do when blade count is changed
+	}
 
 	ImGui::Separator();
 	ImGui::Text("Wind settings");
