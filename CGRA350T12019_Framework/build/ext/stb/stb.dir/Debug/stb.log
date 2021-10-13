@@ -1,6 +1,0 @@
-﻿  Building Custom Rule C:/Users/GGPC/Documents/GitHub/CGRA350_project/CGRA350T12019_Framework/work/ext/stb/CMakeLists.txt
-  stb.c
-C:\Users\GGPC\Documents\GitHub\CGRA350_project\CGRA350T12019_Framework\work\ext\stb\stb_image_write.h(210,8): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\GGPC\Documents\GitHub\CGRA350_project\CGRA350T12019_Framework\work\ext\stb\stb_image_write.h(372,8): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\GGPC\Documents\GitHub\CGRA350_project\CGRA350T12019_Framework\work\ext\stb\stb_image_write.h(702,8): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  stb.vcxproj -> C:\Users\GGPC\Documents\GitHub\CGRA350_project\CGRA350T12019_Framework\build\bin\Debug\stb.lib
