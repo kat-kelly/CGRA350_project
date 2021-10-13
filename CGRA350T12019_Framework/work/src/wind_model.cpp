@@ -170,12 +170,6 @@ void wind_field::addVelocity(vec3 index, vec3 amount)
 	Vz[i] += amount.z;
 }
 
-void wind_field::addDen(vec3 index, float amount)
-{
-	int i = IX(index.x, index.y, index.z);
-	density[i] += amount;
-}
-
 void wind_field::diffuse(int b, float* x, float* x0, float diff)
 {
 	float a = dt * diff * (N - 2) * (N - 2);

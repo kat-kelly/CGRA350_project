@@ -34,8 +34,6 @@ private:
 
 public:
 	void addVelocity(vec3 index, vec3 amount);
-	void addDen(vec3 index, float amount);
-
 	void step();
 
 	// current velocitys

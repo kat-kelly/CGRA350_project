@@ -1,6 +1,6 @@
-^C:\USERS\GGPC\DOCUMENTS\GITHUB\CGRA350_PROJECT\CGRA350T12019_FRAMEWORK\WORK\EXT\STB\CMAKELISTS.TXT
+^C:\USERS\GGPC\SOURCE\REPOS\CGRA350_PROJECT\CGRA350T12019_FRAMEWORK\WORK\EXT\STB\CMAKELISTS.TXT
 setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/GGPC/Documents/GitHub/CGRA350_project/CGRA350T12019_Framework/work -BC:/Users/GGPC/Documents/GitHub/CGRA350_project/CGRA350T12019_Framework/build --check-stamp-file C:/Users/GGPC/Documents/GitHub/CGRA350_project/CGRA350T12019_Framework/build/ext/stb/CMakeFiles/generate.stamp
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SC:/Users/GGPC/source/repos/CGRA350_project/CGRA350T12019_Framework/work -BC:/Users/GGPC/source/repos/CGRA350_project/CGRA350T12019_Framework/build --check-stamp-file C:/Users/GGPC/source/repos/CGRA350_project/CGRA350T12019_Framework/build/ext/stb/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone

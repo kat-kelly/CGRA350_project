@@ -193,12 +193,7 @@ void Application::renderGUI() {
 	ImGui::Text("Wind settings");
 	if (ImGui::RadioButton("Panic button", w_model.display == -1)) {
 		w_model.display = -1;
-
-		wind_model* d = &w_model;
-		wind_model m = wind_model();
-		w_model = m;
-		delete& d;
-		delete d;
+		w_model = wind_model();
 	}
 	if (ImGui::RadioButton("Off", w_model.display == 0)) w_model.display = 0;	ImGui::SameLine();
 	if (ImGui::RadioButton("On", w_model.display == 1)) w_model.display = 1;	ImGui::SameLine();
