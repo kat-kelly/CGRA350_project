@@ -16,7 +16,7 @@ out TesselationEData {
 	vec3 position;
 	vec3 normal;
 	vec2 textureCoord;
-} te_out[];
+} te_out;
 
 vec4 interpolate(float t)
 {
@@ -37,6 +37,8 @@ vec4 interpolate(float t)
 
 void main(void)
 {
-	te_out[gl_InvocationID] = te_in[gl_InvocationID];
+	te_out.position = te_in[gl_PrimitiveID].position;
+    te_out.normal = te_in[gl_PrimitiveID].normal;
+    te_out.textureCoord = te_in[gl_PrimitiveID].textureCoord;
 	gl_Position = uProjectionMatrix * uModelViewMatrix * interpolate(gl_TessCoord.x); //mix(p1, p2, gl_TessCoord.y);
 }

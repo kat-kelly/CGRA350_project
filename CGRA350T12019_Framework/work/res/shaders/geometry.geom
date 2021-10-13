@@ -19,30 +19,42 @@ out GeometryData {
 void main() {
 
 	// lower triangle
-	g_out = g_in[0];
+	g_out.position = g_in[0].position;
+	g_out.normal = g_in[0].normal;
+	g_out.textureCoord = g_in[0].textureCoord;
 	gl_Position = gl_in[0].gl_Position;
 	EmitVertex();
 
-	g_out = g_in[1];
+	g_out.position = g_in[1].position;
+	g_out.normal = g_in[1].normal;
+	g_out.textureCoord = g_in[1].textureCoord;
 	gl_Position = gl_in[1].gl_Position;
 	EmitVertex();
 
-	g_out = g_in[2];
+	g_out.position = g_in[2].position;
+	g_out.normal = g_in[2].normal;
+	g_out.textureCoord = g_in[2].textureCoord;
 	gl_Position = gl_in[2].gl_Position;
 	EmitVertex();
 
 	EndPrimitive();
 
 	// upper triangle
-	g_out = g_in[0];
+	g_out.position = g_in[0].position;
+	g_out.normal = g_in[0].normal;
+	g_out.textureCoord = g_in[0].textureCoord;
 	gl_Position = gl_in[0].gl_Position;
 	EmitVertex();
 
-	g_out = g_in[2];
+	g_out.position = g_in[2].position;
+	g_out.normal = g_in[2].normal;
+	g_out.textureCoord = g_in[2].textureCoord;
 	gl_Position = gl_in[2].gl_Position;
 	EmitVertex();
 
-	g_out = g_in[3];
+	g_out.position = g_in[3].position;
+	g_out.normal = g_in[3].normal;
+	g_out.textureCoord = g_in[3].textureCoord;
 	gl_Position = gl_in[3].gl_Position;
 	EmitVertex();
 

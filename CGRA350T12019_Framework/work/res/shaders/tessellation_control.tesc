@@ -20,7 +20,9 @@ out TesselationCData {
 
 void main()
 {
-    tc_out[gl_InvocationID] = tc_in[gl_InvocationID];
+    tc_out[gl_InvocationID].position = tc_in[gl_InvocationID].position;
+    tc_out[gl_InvocationID].normal = tc_in[gl_InvocationID].normal;
+    tc_out[gl_InvocationID].textureCoord = tc_in[gl_InvocationID].textureCoord;
     if(gl_InvocationID == 0)
     {
 	// distance between point on grass and camera
