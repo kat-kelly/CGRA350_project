@@ -71,7 +71,7 @@ void grass_model::drawBlade(const glm::mat4& view, const glm::mat4 proj, glm::ve
 	curve_mesh.draw(); // draw
 }
 
-void grass_model::setMeshes(GLuint shad) { // TODO: make more heirarchical?
+void grass_model::setMeshes(GLuint shad) {
 	// spline mesh
 	mesh_builder mb_spline = mesh_builder();
 	vec3 parentTrans = vec3(0); // heirarchical
@@ -107,11 +107,13 @@ void grass_model::setControlPts(vec3 cp[4]) {
 }
 
 vec3 grass_model::interpolateBezier(float t) {
-	// heirarchical
+	// heirarchical points
 	vec3 p0 = controlPts[0];
 	vec3 p1 = p0 + controlPts[1];
 	vec3 p2 = p1 + controlPts[2];
 	vec3 p3 = p2 + controlPts[3];
+
+	// get point along curve
 	return pow((1.0f - t), 3.0f) * p0
 		+ 3.0f * t * pow((1.0f - t), 2.0f) * p1
 		+ 3.0f * pow(t, 2.0f) * (1.0f - t) * p2
@@ -119,18 +121,6 @@ vec3 grass_model::interpolateBezier(float t) {
 }
 
 Application::Application(GLFWwindow* window) : m_window(window) {
-	/*
-	// set shaders
-	shader_builder sb;
-	sb.set_shader(GL_VERTEX_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_vert.glsl"));
-	// added shaders by Katrina
-	//sb.set_shader(GL_TESS_CONTROL_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_control.glsl"));
-	//sb.set_shader(GL_TESS_EVALUATION_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_eval.glsl"));
-	//sb.set_shader(GL_GEOMETRY_SHADER, CGRA_SRCDIR + std::string("//res//shaders//geometry.glsl"));
-	//
-	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
-	GLuint shader = sb.build();*/
-
 	setGrass();
 }
 
@@ -205,11 +195,16 @@ void Application::render() {
 
 	for (int i = 0; i < grass_patch.size(); i++) {
 		grass_model grass = grass_patch.at(i);
-		// draw grass blade
-		grass.drawSpline(view, proj);
-		grass.drawCurve(view, proj);
-		vec3 camera_position = vec3((m_distance * cos(m_pitch) * cos(m_yaw)), (m_distance * cos(m_pitch) * sin(m_yaw)), (m_distance * sin(m_pitch)));
-		//grass.drawBlade(view, proj, camera_position);
+		if (!show_rendered_grass) {
+			// draw grass blade as bezier and spline
+			grass.drawSpline(view, proj);
+			grass.drawCurve(view, proj);
+		}
+		else {
+			// draw grass blade rendered
+			vec3 camera_position = vec3((m_distance * cos(m_pitch) * cos(m_yaw)), (m_distance * cos(m_pitch) * sin(m_yaw)), (m_distance * sin(m_pitch)));
+			grass.drawBlade(view, proj, camera_position);
+		}
 	}
 }
 
@@ -238,8 +233,11 @@ void Application::renderGUI() {
 	// add or decrease number of grass blades
 	if (ImGui::SliderInt("Grass blades", &blade_count, 1, 100)) {
 		// update grass patch vector
-		setGrass(); // TODO: only do when blade count is changed
+		setGrass();
 	}
+
+	// show grass or lines
+	ImGui::Checkbox("Grass render", &show_rendered_grass);
 
 	ImGui::Separator();
 	ImGui::Text("Wind settings");

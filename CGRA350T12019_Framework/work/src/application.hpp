@@ -75,6 +75,7 @@ private:
 
 	// rendering
 	int blade_count = 1;
+	bool show_rendered_grass = false;
 
 public:
 	// setup
