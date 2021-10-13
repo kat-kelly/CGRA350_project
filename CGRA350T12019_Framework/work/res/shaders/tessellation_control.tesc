@@ -25,9 +25,10 @@ void main()
     {
 	// distance between point on grass and camera
         float dist = distance(gl_in[0].gl_Position.xyz, gl_in[1].gl_Position.xyz);
+        float camDist = distance(gl_in[0].gl_Position.xyz, cameraPos);
 
         gl_TessLevelOuter[0] = 1.0;
-        gl_TessLevelOuter[1] = max(dist/cameraPos, 1.0); // will increase further from camera
+        gl_TessLevelOuter[1] = max(dist/camDist, 1.0); // will increase further from camera
     }
     
     gl_out[gl_InvocationID].gl_Position  = gl_in[gl_InvocationID].gl_Position;
