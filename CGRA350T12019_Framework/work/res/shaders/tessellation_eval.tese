@@ -4,11 +4,19 @@
 uniform mat4 uProjectionMatrix;
 uniform mat4 uModelViewMatrix;
 
-//patch in float gl_TessLevelOuter[4];
-//patch in float gl_TessLevelInner[2];
+layout(isolines, equal_spacing, ccw) in;
 
+in TesselationCData {
+	vec3 position;
+	vec3 normal;
+	vec2 textureCoord;
+} te_in[];
 
-layout (isolines, equal_spacing) in; // isolines 
+out TesselationEData {
+	vec3 position;
+	vec3 normal;
+	vec2 textureCoord;
+} te_out[];
 
 vec4 interpolate(float t)
 {
@@ -18,6 +26,7 @@ vec4 interpolate(float t)
 	vec4 p2 = gl_in[2].gl_Position;
 	vec4 p3 = gl_in[3].gl_Position;
 
+	// bezier calculation
 	float b0 = (1-t) * (1-t) * (1-t);
 	float b1 = 3 * t * (1-t) * (1-t);
 	float b2 = 3 * t * t * (1-t);
@@ -28,5 +37,6 @@ vec4 interpolate(float t)
 
 void main(void)
 {
-    gl_Position = uProjectionMatrix * uModelViewMatrix * interpolate(gl_TessCoord.x); //mix(p1, p2, gl_TessCoord.y);
+	te_out[gl_InvocationID] = te_in[gl_InvocationID];
+	gl_Position = uProjectionMatrix * uModelViewMatrix * interpolate(gl_TessCoord.x); //mix(p1, p2, gl_TessCoord.y);
 }

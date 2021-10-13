@@ -69,7 +69,7 @@ void grass_model::drawBlade(const glm::mat4& view, const glm::mat4 proj, glm::ve
 	glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(modelview));
 	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(0, 1, 0))); // color is green
 	// shaders added by Katrina
-	//glUniform3fv(glGetUniformLocation(shader, "cameraPos"), 1, value_ptr(camera)); // tessellation control
+	glUniform3fv(glGetUniformLocation(shader, "cameraPos"), 1, value_ptr(camera)); // tessellation control
 
 	spline_mesh.draw(); // error
 }

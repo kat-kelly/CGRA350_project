@@ -11,16 +11,21 @@ uniform vec3 uColor;
 //	vec3 normal;
 //	vec2 textureCoord;
 //} f_in;
+in GeometryData {
+	vec3 position;
+	vec3 normal;
+	vec2 textureCoord;
+} g_in;
 
 // framebuffer output
 out vec4 fb_color;
 
 void main() {
 	// calculate lighting (hack)
-	//vec3 eye = normalize(-f_in.position);
-	//float light = abs(dot(normalize(f_in.normal), eye));
-	//vec3 color = mix(uColor / 4, uColor, light);
+	vec3 eye = normalize(-g_in.position);
+	float light = abs(dot(normalize(g_in.normal), eye));
+	vec3 color = mix(uColor / 4, uColor, light);
 
 	// output to the frambuffer
-	fb_color = vec4(uColor, 1);//vec4(color, 1);
+	fb_color = vec4(color, 1);
 }
