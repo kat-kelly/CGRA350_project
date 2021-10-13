@@ -47,6 +47,10 @@ void grass_model::drawSpline(const glm::mat4& view, const glm::mat4 proj) {
 }
 
 void grass_model::drawCurve(const glm::mat4& view, const glm::mat4 proj) { // TODO: get LOD from distance
+	//GLuint sh;
+
+	//set_shader(GL_TESS_CONTROL_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_control.glsl"));
+
 	mat4 modelview = view * modelTransform;
 
 	glUseProgram(shader); // load shader and variables
@@ -65,10 +69,21 @@ void grass_model::drawBlade(const glm::mat4& view, const glm::mat4 proj, glm::ve
 	glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(modelview));
 	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(0, 1, 0))); // color is green
 	// shaders added by Katrina
-	//glUniform3fv(glGetUniformLocation(shader, "cameraPos"), 1, value_ptr(vec4(camera, 0))); // tessellation control
+	//glUniform3fv(glGetUniformLocation(shader, "cameraPos"), 1, value_ptr(camera)); // tessellation control
+	
+	/*vector<vec3> verts;
+	verts.push_back(vec3(0.0f, 0.0f, 0.0f));
+	GLuint VBO;
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verts), NULL, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glDrawArrays(GL_POINTS, 0, 1);
+	glDisableVertexAttribArray(0);*/
 
-	// TODO: change to modified mesh
-	curve_mesh.draw(); // draw
+	spline_mesh.draw(); // error
 }
 
 void grass_model::setMeshes(GLuint shad) {
@@ -129,11 +144,12 @@ void Application::setGrass()
 	// set shaders
 	shader_builder sb;
 	sb.set_shader(GL_VERTEX_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_vert.glsl"));
-	// added shaders by Katrina
-	//sb.set_shader(GL_TESS_CONTROL_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_control.glsl"));
-	//sb.set_shader(GL_TESS_EVALUATION_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_eval.glsl"));
-	//sb.set_shader(GL_GEOMETRY_SHADER, CGRA_SRCDIR + std::string("//res//shaders//geometry.glsl"));
-	//
+	if (show_rendered_grass) {
+		// added shaders by Katrina
+		sb.set_shader(GL_TESS_CONTROL_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_control.tesc"));
+		sb.set_shader(GL_TESS_EVALUATION_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_eval.tese"));
+		sb.set_shader(GL_GEOMETRY_SHADER, CGRA_SRCDIR + std::string("//res//shaders//geometry.geom"));
+	}
 	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
 	GLuint shader = sb.build();
 
@@ -156,6 +172,9 @@ void Application::setGrass()
 		grass.setMeshes(shader);
 		grass_patch.push_back(grass);
 	}
+
+	m_model.mesh = load_wavefront_data(CGRA_SRCDIR + std::string("/res//assets//teapot.obj")).build();
+	m_model.shader = shader;
 }
 
 
@@ -204,6 +223,7 @@ void Application::render() {
 			// draw grass blade rendered
 			vec3 camera_position = vec3((m_distance * cos(m_pitch) * cos(m_yaw)), (m_distance * cos(m_pitch) * sin(m_yaw)), (m_distance * sin(m_pitch)));
 			grass.drawBlade(view, proj, camera_position);
+			//m_model.draw(view, proj);
 		}
 	}
 }
@@ -237,18 +257,16 @@ void Application::renderGUI() {
 	}
 
 	// show grass or lines
-	ImGui::Checkbox("Grass render", &show_rendered_grass);
+	if (ImGui::Checkbox("Grass render", &show_rendered_grass)) {
+		// update grass patch vector
+		setGrass();
+	}
 
 	ImGui::Separator();
 	ImGui::Text("Wind settings");
 	if (ImGui::RadioButton("Panic button", w_model.display == -1)) {
 		w_model.display = -1;
-
-		wind_model* d = &w_model;
-		wind_model m = wind_model();
-		w_model = m;
-		delete& d;
-		delete d;
+		w_model = wind_model();
 	}
 	if (ImGui::RadioButton("Off", w_model.display == 0)) w_model.display = 0;	ImGui::SameLine();
 	if (ImGui::RadioButton("On", w_model.display == 1)) w_model.display = 1;	ImGui::SameLine();

@@ -32,6 +32,7 @@ struct grass_model { // TODO: store in vbo
 	GLuint shader = 0;
 	cgra::gl_mesh spline_mesh;
 	cgra::gl_mesh curve_mesh;
+	cgra::gl_mesh blade_mesh; // TODO: not needed?
 	glm::vec3 color{ 0.7 };
 	glm::mat4 modelTransform{ 1.0 };
 	glm::vec3 controlPts[4]{ glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0) }; // FIXME: make changable
@@ -69,7 +70,6 @@ private:
 	// geometry
 	basic_model m_model;
 	wind_model w_model;
-	//basic_model m_model;
 	std::vector<grass_model> grass_patch; // changable vector that holds multiple grass blades
 	//grass_model grass; // TODO: remove and use vector above instead
 

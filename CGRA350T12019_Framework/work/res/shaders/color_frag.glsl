@@ -1,4 +1,4 @@
-#version 330 core
+#version 410 core
 
 // uniform data
 uniform mat4 uProjectionMatrix;
