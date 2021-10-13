@@ -7,7 +7,8 @@ uniform mat4 uModelViewMatrix;
 //patch in float gl_TessLevelOuter[4];
 //patch in float gl_TessLevelInner[2];
 
-layout (isolines, equal_spacing) in; // isolines, 
+
+layout (isolines, equal_spacing) in; // isolines 
 
 vec4 interpolate(float t)
 {

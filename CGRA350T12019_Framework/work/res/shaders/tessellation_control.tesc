@@ -1,4 +1,4 @@
-#version 430 core
+#version 410 core
 #extension GL_ARB_tessellation_shader : enable
 //#extension GL_NV_gpu_program5 : enable
 
@@ -7,6 +7,7 @@
 //uniform mat4 uProjectionMatrix;
 //uniform mat4 uModelViewMatrix;
 //uniform vec3 uColor;
+
 
 layout (vertices = 4) out;
 
@@ -19,6 +20,6 @@ void main()
         gl_TessLevelOuter[0] = 1.0;
         gl_TessLevelOuter[1] = dist;
     }
-
-    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+    
+    gl_out[gl_InvocationID].gl_Position  = gl_in[gl_InvocationID].gl_Position;
 }

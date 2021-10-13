@@ -70,18 +70,6 @@ void grass_model::drawBlade(const glm::mat4& view, const glm::mat4 proj, glm::ve
 	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(0, 1, 0))); // color is green
 	// shaders added by Katrina
 	//glUniform3fv(glGetUniformLocation(shader, "cameraPos"), 1, value_ptr(camera)); // tessellation control
-	
-	/*vector<vec3> verts;
-	verts.push_back(vec3(0.0f, 0.0f, 0.0f));
-	GLuint VBO;
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(verts), NULL, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glDrawArrays(GL_POINTS, 0, 1);
-	glDisableVertexAttribArray(0);*/
 
 	spline_mesh.draw(); // error
 }
