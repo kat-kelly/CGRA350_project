@@ -24,7 +24,7 @@ using namespace glm;
 
 
 
-void basic_model::draw(const glm::mat4 &view, const glm::mat4 proj) { // UNUSED
+void basic_model::draw(const glm::mat4& view, const glm::mat4 proj) { // UNUSED
 	mat4 modelview = view * modelTransform;
 
 	glUseProgram(shader); // load shader and variables
@@ -41,7 +41,7 @@ void grass_model::drawSpline(const glm::mat4& view, const glm::mat4 proj) {
 	glUseProgram(shader); // load shader and variables
 	glUniformMatrix4fv(glGetUniformLocation(shader, "uProjectionMatrix"), 1, false, value_ptr(proj));
 	glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(modelview));
-	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(1,0,0))); // color is red
+	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(1, 0, 0))); // color is red
 
 	spline_mesh.draw(); // draw
 }
@@ -52,7 +52,7 @@ void grass_model::drawCurve(const glm::mat4& view, const glm::mat4 proj) {
 	glUseProgram(shader); // load shader and variables
 	glUniformMatrix4fv(glGetUniformLocation(shader, "uProjectionMatrix"), 1, false, value_ptr(proj));
 	glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(modelview));
-	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(0,1,0))); // color is green
+	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(0, 1, 0))); // color is green
 
 	curve_mesh.draw(); // draw
 }
@@ -141,9 +141,9 @@ void Application::render() {
 	if (m_show_grid) drawGrid(view, proj);
 	if (m_show_axis) drawAxis(view, proj);
 	glPolygonMode(GL_FRONT_AND_BACK, (m_showWireframe) ? GL_LINE : GL_FILL);
-  
-  // wind
-  w_model.run(view, proj);
+
+	// wind
+	w_model.run(view, proj);
 
 	// draw grass blade
 	grass.drawSpline(view, proj);
@@ -202,6 +202,9 @@ void Application::renderGUI() {
 		ImGui::SliderFloat("Wind Strength", &w_model.w_strength, 0, 5, "%.1f");
 		ImGui::SliderFloat("Wind Yaw", &w_model.w_angle, -20, 20, "%.1f");
 		ImGui::SliderFloat("Wind Pulse", &w_model.pulse, 0.0, 0.05, "%.2f");
+		if (w_model.display == 2) {
+			ImGui::Checkbox("Show balls", &w_model.balls);
+		}
 	}
 	ImGui::Separator();
 

@@ -60,6 +60,7 @@ void wind_model::simulate() {
 			}
 
 			w_field->addVelocity(index1, vel);
+			w_field->addDensity(index1, length(vel) / 20);
 		}
 
 		w_field->step();
@@ -82,6 +83,10 @@ void wind_model::draw(const mat4& view, const mat4& proj)
 				float x = w_field->Vx[IX(i, j, k)];
 				float y = w_field->Vy[IX(i, j, k)];
 				float z = w_field->Vz[IX(i, j, k)];
+				float d = w_field->density[IX(i, j, k)];
+				if (d > 0) {
+					//w_field->addDensity(vec3(i, j, k), -0.00001);
+				}
 
 				vec = vec3(x, y, z);// setup
 				mv = view;
@@ -99,6 +104,19 @@ void wind_model::draw(const mat4& view, const mat4& proj)
 				glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(1 - len, len, 0)));
 				glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(mv));
 				drawCone();
+
+				if (balls) {
+					mv = view;
+					mv = scale(mv, vec3(S));// scale everything
+					mv = translate(mv, vec3(i + 0.5 - N / 2, j + 0.5, k + 0.5 - N / 2));	 // translate
+					mv = scale(mv, vec3(d, d, d));// scale
+					glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(1-d*10, 1-d*10, 1-d*10)));
+					glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(mv));
+					drawSphere();
+				}
+				else {
+					w_field->density[IX(i, j, k)] = 0;
+				}
 			}
 		}
 
@@ -168,6 +186,11 @@ void wind_field::addVelocity(vec3 index, vec3 amount)
 	Vx[i] += amount.x;
 	Vy[i] += amount.y;
 	Vz[i] += amount.z;
+}
+void wind_field::addDensity(vec3 index, float amount)
+{
+	int i = IX(index.x, index.y, index.z);
+	density[i] += amount;
 }
 
 void wind_field::diffuse(int b, float* x, float* x0, float diff)

@@ -19,7 +19,6 @@ private:
 
 	// density previouse velocities 
 	float* s;
-	float* density;
 	float* Vx0;
 	float* Vy0;
 	float* Vz0;
@@ -33,10 +32,12 @@ private:
 	void project(float* velocX, float* velocY, float* velocZ, float* p, float* div);
 
 public:
+	void addDensity(vec3 index, float amount);
 	void addVelocity(vec3 index, vec3 amount);
 	void step();
 
-	// current velocitys
+	// current velocitys and densitys
+	float* density;
 	float* Vx;
 	float* Vy;
 	float* Vz;
@@ -78,6 +79,7 @@ public:
 	// 1 = On
 	// 2 = visualize
 	int display = 0;
+	bool balls = true;
 
 	float w_angle = 0;
 	float w_strength = 0.1;
