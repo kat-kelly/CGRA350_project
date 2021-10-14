@@ -137,11 +137,8 @@ void Application::setGrass()
 		sb.set_shader(GL_TESS_CONTROL_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_control.tesc"));
 		sb.set_shader(GL_TESS_EVALUATION_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_eval.tese"));
 		sb.set_shader(GL_GEOMETRY_SHADER, CGRA_SRCDIR + std::string("//res//shaders//geometry.geom"));
-		sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag_grass.glsl"));
 	}
-	else {
-		sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
-	}
+	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
 	GLuint shader = sb.build();
 
 	// clear existing patch
