@@ -28,6 +28,7 @@ private:
 	void lin_solve(int b, float* x, float* x0, float a, float c);
 
 	void diffuse(int b, float* x, float* x0, float diff);
+
 	void advect(int b, float* d, float* d0, float* velocX, float* velocY, float* velocZ);
 	void project(float* velocX, float* velocY, float* velocZ, float* p, float* div);
 

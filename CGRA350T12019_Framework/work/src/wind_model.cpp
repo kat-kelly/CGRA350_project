@@ -1,5 +1,5 @@
 #define GLM_ENABLE_EXPERIMENTAL
-#define IX(x, y, z) ((x) + (y) * N + (z) * N * N)
+#define INDEX(x, y, z) ((x) + (y) * N + (z) * N * N)
 
 // C++
 #include <iostream>
@@ -80,10 +80,10 @@ void wind_model::draw(const mat4& view, const mat4& proj)
 	for (int k = 0; k < N; ++k) {
 		for (int j = 0; j < N; ++j) {
 			for (int i = 0; i < N; ++i) {
-				float x = w_field->Vx[IX(i, j, k)];
-				float y = w_field->Vy[IX(i, j, k)];
-				float z = w_field->Vz[IX(i, j, k)];
-				float d = w_field->density[IX(i, j, k)];
+				float x = w_field->Vx[INDEX(i, j, k)];
+				float y = w_field->Vy[INDEX(i, j, k)];
+				float z = w_field->Vz[INDEX(i, j, k)];
+				float d = w_field->density[INDEX(i, j, k)];
 				if (d > 0) {
 					//w_field->addDensity(vec3(i, j, k), -0.00001);
 				}
@@ -115,7 +115,7 @@ void wind_model::draw(const mat4& view, const mat4& proj)
 					drawSphere();
 				}
 				else {
-					w_field->density[IX(i, j, k)] = 0;
+					w_field->density[INDEX(i, j, k)] = 0;
 				}
 			}
 		}
@@ -181,7 +181,7 @@ void wind_field::step()
 
 void wind_field::addVelocity(vec3 index, vec3 amount)
 {
-	int i = IX(index.x, index.y, index.z);
+	int i = INDEX(index.x, index.y, index.z);
 
 	Vx[i] += amount.x;
 	Vy[i] += amount.y;
@@ -189,7 +189,7 @@ void wind_field::addVelocity(vec3 index, vec3 amount)
 }
 void wind_field::addDensity(vec3 index, float amount)
 {
-	int i = IX(index.x, index.y, index.z);
+	int i = INDEX(index.x, index.y, index.z);
 	density[i] += amount;
 }
 
@@ -217,9 +217,9 @@ void wind_field::advect(int b, float* d, float* d0, float* velocX, float* velocY
 	for (k = 1, kfloat = 1; k < N - 1; ++k, kfloat++) {
 		for (j = 1, jfloat = 1; j < N - 1; ++j, jfloat++) {
 			for (i = 1, ifloat = 1; i < N - 1; ++i, ifloat++) {
-				tmp1 = dtx * velocX[IX(i, j, k)];
-				tmp2 = dty * velocY[IX(i, j, k)];
-				tmp3 = dtz * velocZ[IX(i, j, k)];
+				tmp1 = dtx * velocX[INDEX(i, j, k)];
+				tmp2 = dty * velocY[INDEX(i, j, k)];
+				tmp3 = dtz * velocZ[INDEX(i, j, k)];
 				x = ifloat - tmp1;
 				y = jfloat - tmp2;
 				z = kfloat - tmp3;
@@ -251,16 +251,16 @@ void wind_field::advect(int b, float* d, float* d0, float* velocX, float* velocY
 				int k0i = k0;
 				int k1i = k1;
 
-				d[IX(i, j, k)] =
+				d[INDEX(i, j, k)] =
 
-					s0 * (t0 * (u0 * d0[IX(i0i, j0i, k0i)]
-						+ u1 * d0[IX(i0i, j0i, k1i)])
-						+ (t1 * (u0 * d0[IX(i0i, j1i, k0i)]
-							+ u1 * d0[IX(i0i, j1i, k1i)])))
-					+ s1 * (t0 * (u0 * d0[IX(i1i, j0i, k0i)]
-						+ u1 * d0[IX(i1i, j0i, k1i)])
-						+ (t1 * (u0 * d0[IX(i1i, j1i, k0i)]
-							+ u1 * d0[IX(i1i, j1i, k1i)])));
+					s0 * (t0 * (u0 * d0[INDEX(i0i, j0i, k0i)]
+						+ u1 * d0[INDEX(i0i, j0i, k1i)])
+						+ (t1 * (u0 * d0[INDEX(i0i, j1i, k0i)]
+							+ u1 * d0[INDEX(i0i, j1i, k1i)])))
+					+ s1 * (t0 * (u0 * d0[INDEX(i1i, j0i, k0i)]
+						+ u1 * d0[INDEX(i1i, j0i, k1i)])
+						+ (t1 * (u0 * d0[INDEX(i1i, j1i, k0i)]
+							+ u1 * d0[INDEX(i1i, j1i, k1i)])));
 			}
 		}
 	}
@@ -272,15 +272,15 @@ void wind_field::project(float* velocX, float* velocY, float* velocZ, float* p, 
 	for (int k = 1; k < N - 1; ++k) {
 		for (int j = 1; j < N - 1; ++j) {
 			for (int i = 1; i < N - 1; ++i) {
-				div[IX(i, j, k)] = -0.5f * (
-					velocX[IX(i + 1, j, k)]
-					- velocX[IX(i - 1, j, k)]
-					+ velocY[IX(i, j + 1, k)]
-					- velocY[IX(i, j - 1, k)]
-					+ velocZ[IX(i, j, k + 1)]
-					- velocZ[IX(i, j, k - 1)]
+				div[INDEX(i, j, k)] = -0.5f * (
+					velocX[INDEX(i + 1, j, k)]
+					- velocX[INDEX(i - 1, j, k)]
+					+ velocY[INDEX(i, j + 1, k)]
+					- velocY[INDEX(i, j - 1, k)]
+					+ velocZ[INDEX(i, j, k + 1)]
+					- velocZ[INDEX(i, j, k - 1)]
 					) / N;
-				p[IX(i, j, k)] = 0;
+				p[INDEX(i, j, k)] = 0;
 			}
 		}
 	}
@@ -291,12 +291,12 @@ void wind_field::project(float* velocX, float* velocY, float* velocZ, float* p, 
 	for (int k = 1; k < N - 1; ++k) {
 		for (int j = 1; j < N - 1; ++j) {
 			for (int i = 1; i < N - 1; ++i) {
-				velocX[IX(i, j, k)] -= 0.5f * (p[IX(i + 1, j, k)]
-					- p[IX(i - 1, j, k)]) * N;
-				velocY[IX(i, j, k)] -= 0.5f * (p[IX(i, j + 1, k)]
-					- p[IX(i, j - 1, k)]) * N;
-				velocZ[IX(i, j, k)] -= 0.5f * (p[IX(i, j, k + 1)]
-					- p[IX(i, j, k - 1)]) * N;
+				velocX[INDEX(i, j, k)] -= 0.5f * (p[INDEX(i + 1, j, k)]
+					- p[INDEX(i - 1, j, k)]) * N;
+				velocY[INDEX(i, j, k)] -= 0.5f * (p[INDEX(i, j + 1, k)]
+					- p[INDEX(i, j - 1, k)]) * N;
+				velocZ[INDEX(i, j, k)] -= 0.5f * (p[INDEX(i, j, k + 1)]
+					- p[INDEX(i, j, k - 1)]) * N;
 			}
 		}
 	}
@@ -307,20 +307,20 @@ void wind_field::project(float* velocX, float* velocY, float* velocZ, float* p, 
 
 void wind_field::lin_solve(int b, float* x, float* x0, float a, float c)
 {
-	float cRecip = 1.0 / c;
+	float cc = 1.0 / c;
 	for (int k = 0; k < iter; ++k) {
 		for (int m = 1; m < N - 1; ++m) {
 			for (int j = 1; j < N - 1; ++j) {
 				for (int i = 1; i < N - 1; ++i) {
-					x[IX(i, j, m)] =
-						(x0[IX(i, j, m)]
-							+ a * (x[IX(i + 1, j, m)]
-								+ x[IX(i - 1, j, m)]
-								+ x[IX(i, j + 1, m)]
-								+ x[IX(i, j - 1, m)]
-								+ x[IX(i, j, m + 1)]
-								+ x[IX(i, j, m - 1)]
-								)) * cRecip;
+					x[INDEX(i, j, m)] =
+						(x0[INDEX(i, j, m)]
+							+ a * (x[INDEX(i + 1, j, m)]
+								+ x[INDEX(i - 1, j, m)]
+								+ x[INDEX(i, j + 1, m)]
+								+ x[INDEX(i, j - 1, m)]
+								+ x[INDEX(i, j, m + 1)]
+								+ x[INDEX(i, j, m - 1)]
+								)) * cc;
 				}
 			}
 		}
@@ -331,47 +331,47 @@ void wind_field::set_Boundaries(int b, float* x)
 {
 	for (int j = 1; j < N - 1; ++j) {
 		for (int i = 1; i < N - 1; ++i) {
-			x[IX(i, j, 0)] = b == 3 ? -x[IX(i, j, 1)] : x[IX(i, j, 1)];
-			x[IX(i, j, N - 1)] = b == 3 ? -x[IX(i, j, N - 2)] : x[IX(i, j, N - 2)];
+			x[INDEX(i, j, 0)] = b == 3 ? -x[INDEX(i, j, 1)] : x[INDEX(i, j, 1)];
+			x[INDEX(i, j, N - 1)] = b == 3 ? -x[INDEX(i, j, N - 2)] : x[INDEX(i, j, N - 2)];
 		}
 	}
 	for (int k = 1; k < N - 1; ++k) {
 		for (int i = 1; i < N - 1; ++i) {
-			x[IX(i, 0, k)] = b == 2 ? -x[IX(i, 1, k)] : x[IX(i, 1, k)];
-			x[IX(i, N - 1, k)] = b == 2 ? -x[IX(i, N - 2, k)] : x[IX(i, N - 2, k)];
+			x[INDEX(i, 0, k)] = b == 2 ? -x[INDEX(i, 1, k)] : x[INDEX(i, 1, k)];
+			x[INDEX(i, N - 1, k)] = b == 2 ? -x[INDEX(i, N - 2, k)] : x[INDEX(i, N - 2, k)];
 		}
 	}
 	for (int k = 1; k < N - 1; ++k) {
 		for (int j = 1; j < N - 1; ++j) {
-			x[IX(0, j, k)] = b == 1 ? -x[IX(1, j, k)] : x[IX(1, j, k)];
-			x[IX(N - 1, j, k)] = b == 1 ? -x[IX(N - 2, j, k)] : x[IX(N - 2, j, k)];
+			x[INDEX(0, j, k)] = b == 1 ? -x[INDEX(1, j, k)] : x[INDEX(1, j, k)];
+			x[INDEX(N - 1, j, k)] = b == 1 ? -x[INDEX(N - 2, j, k)] : x[INDEX(N - 2, j, k)];
 		}
 	}
 
-	x[IX(0, 0, 0)] = 0.33f * (x[IX(1, 0, 0)]
-		+ x[IX(0, 1, 0)]
-		+ x[IX(0, 0, 1)]);
-	x[IX(0, N - 1, 0)] = 0.33f * (x[IX(1, N - 1, 0)]
-		+ x[IX(0, N - 2, 0)]
-		+ x[IX(0, N - 1, 1)]);
-	x[IX(0, 0, N - 1)] = 0.33f * (x[IX(1, 0, N - 1)]
-		+ x[IX(0, 1, N - 1)]
-		+ x[IX(0, 0, N)]);
-	x[IX(0, N - 1, N - 1)] = 0.33f * (x[IX(1, N - 1, N - 1)]
-		+ x[IX(0, N - 2, N - 1)]
-		+ x[IX(0, N - 1, N - 2)]);
-	x[IX(N - 1, 0, 0)] = 0.33f * (x[IX(N - 2, 0, 0)]
-		+ x[IX(N - 1, 1, 0)]
-		+ x[IX(N - 1, 0, 1)]);
-	x[IX(N - 1, N - 1, 0)] = 0.33f * (x[IX(N - 2, N - 1, 0)]
-		+ x[IX(N - 1, N - 2, 0)]
-		+ x[IX(N - 1, N - 1, 1)]);
-	x[IX(N - 1, 0, N - 1)] = 0.33f * (x[IX(N - 2, 0, N - 1)]
-		+ x[IX(N - 1, 1, N - 1)]
-		+ x[IX(N - 1, 0, N - 2)]);
-	x[IX(N - 1, N - 1, N - 1)] = 0.33f * (x[IX(N - 2, N - 1, N - 1)]
-		+ x[IX(N - 1, N - 2, N - 1)]
-		+ x[IX(N - 1, N - 1, N - 2)]);
+	x[INDEX(0, 0, 0)] = 0.33f * (x[INDEX(1, 0, 0)]
+		+ x[INDEX(0, 1, 0)]
+		+ x[INDEX(0, 0, 1)]);
+	x[INDEX(0, N - 1, 0)] = 0.33f * (x[INDEX(1, N - 1, 0)]
+		+ x[INDEX(0, N - 2, 0)]
+		+ x[INDEX(0, N - 1, 1)]);
+	x[INDEX(0, 0, N - 1)] = 0.33f * (x[INDEX(1, 0, N - 1)]
+		+ x[INDEX(0, 1, N - 1)]
+		+ x[INDEX(0, 0, N)]);
+	x[INDEX(0, N - 1, N - 1)] = 0.33f * (x[INDEX(1, N - 1, N - 1)]
+		+ x[INDEX(0, N - 2, N - 1)]
+		+ x[INDEX(0, N - 1, N - 2)]);
+	x[INDEX(N - 1, 0, 0)] = 0.33f * (x[INDEX(N - 2, 0, 0)]
+		+ x[INDEX(N - 1, 1, 0)]
+		+ x[INDEX(N - 1, 0, 1)]);
+	x[INDEX(N - 1, N - 1, 0)] = 0.33f * (x[INDEX(N - 2, N - 1, 0)]
+		+ x[INDEX(N - 1, N - 2, 0)]
+		+ x[INDEX(N - 1, N - 1, 1)]);
+	x[INDEX(N - 1, 0, N - 1)] = 0.33f * (x[INDEX(N - 2, 0, N - 1)]
+		+ x[INDEX(N - 1, 1, N - 1)]
+		+ x[INDEX(N - 1, 0, N - 2)]);
+	x[INDEX(N - 1, N - 1, N - 1)] = 0.33f * (x[INDEX(N - 2, N - 1, N - 1)]
+		+ x[INDEX(N - 1, N - 2, N - 1)]
+		+ x[INDEX(N - 1, N - 1, N - 2)]);
 }
 
 //void wind_field::step() {
