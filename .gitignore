@@ -37,3 +37,4 @@
 /CGRA350T12019_Framework/build/
 /CGRA350T12019_Framework/work/out/
 *.DS_store
+*build/
