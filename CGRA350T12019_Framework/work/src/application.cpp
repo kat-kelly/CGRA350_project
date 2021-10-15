@@ -61,7 +61,7 @@ void grass_model::drawCurve(const glm::mat4& view, const glm::mat4 proj) { // TO
 	curve_mesh.draw(); // draw
 }
 
-void grass_model::drawBlade(const glm::mat4& view, const glm::mat4 proj, glm::vec3 camera) {
+void grass_model::drawBlade(const glm::mat4& view, const glm::mat4 proj) {
 	mat4 modelview = view * modelTransform;
 
 	glUseProgram(shader); // load shader and variables
@@ -143,6 +143,32 @@ vec3 grass_model::interpolateBezier(float t) {
 		+ pow(t, 3.0f) * p3;
 }
 
+void grass_model::resetBlade(vec3 camera_position)
+{
+	// set level of detail based on dist from camera
+	float c_dist = distance(camera_position, controlPts[0]);
+	if (c_dist < 5) {
+		lod = 8;
+	}
+	else if (c_dist < 10) {
+		lod = 6;
+	}
+	else if (c_dist < 15) {
+		lod = 4;
+	}
+	else {
+		lod = 2;
+	}
+
+	// set shaders
+	shader_builder sb;
+	sb.set_shader(GL_VERTEX_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_vert.glsl"));
+	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
+	GLuint shad = sb.build();
+
+	setMeshes(shad);
+}
+
 Application::Application(GLFWwindow* window) : m_window(window) {
 	setGrass();
 }
@@ -164,11 +190,13 @@ void Application::setGrass()
 	// clear existing patch
 	grass_patch.clear();
 
+	vec3 camera_position = vec3((m_distance * cos(m_pitch) * cos(m_yaw)), (m_distance * cos(m_pitch) * sin(m_yaw)), (m_distance * sin(m_pitch)));
+
 	// set up grass blade/s
 	vec3 arr[4] = { vec3(0, 0, 0), vec3(0, 1, 0), vec3(0, 1, 0), vec3(0, 1, 0) }; // grass blade in center
 	grass_model centerBlade;
 	centerBlade.setControlPts(arr);
-	centerBlade.setMeshes(shader);
+	centerBlade.resetBlade(camera_position);
 	grass_patch.push_back(centerBlade);
 
 	// set up the rest of the patch
@@ -177,6 +205,7 @@ void Application::setGrass()
 		vec3 cp[4] = { vec3(rand() % 20 - 10, 0, rand() % 20 - 10), vec3(0, 1, 0), vec3(0, 1, 0), vec3(0, 1, 0) };
 		grass_model grass;
 		grass.setControlPts(cp);
+		centerBlade.resetBlade(camera_position);
 		grass.setMeshes(shader);
 		grass_patch.push_back(grass);
 	}
@@ -184,6 +213,7 @@ void Application::setGrass()
 	m_model.mesh = load_wavefront_data(CGRA_SRCDIR + std::string("/res//assets//teapot.obj")).build();
 	m_model.shader = shader;
 }
+
 
 
 void Application::render() {
@@ -220,29 +250,11 @@ void Application::render() {
 	// wind
 	w_model.run(view, proj);
 
-	/*for (int i = 0; i < grass_patch.size(); i++) {
-		grass_model grass = grass_patch.at(i);
-		int index = w_model.getIndex(grass.controlPts[0].x, grass.controlPts[0].y, grass.controlPts[0].z); // index of wind in same area as grass
-		
-		vec3 cp[4]{ grass.controlPts[0], grass.controlPts[1], grass.controlPts[2], grass.controlPts[3] };
-
-		// for each control point besides root
-		float stiffness = 3;
-		for (int c = 1; c < 4; c++) {
-			// grass blade moves with wind
-			vec3 velocity = vec3(w_model.w_field->Vx[index], w_model.w_field->Vx[index], w_model.w_field->Vx[index]);
-			vec3 W = 5.0f * velocity; // thrust area * drag * velocity
-			vec3 R = stiffness * vec3(0, 0, 0) - grass.controlPts[c]; // stiffness * displacement * position norm
-			//vec3 D = vec3(w_model.w_angle) / vec3(glfwGetTime()); // damping coefficient * angular velocity
-			vec3 force = W + R;// + D; 
-			stiffness--; // stiffness lessens when further from root
-			cp[c] = grass.controlPts[c] + force;
-		}
-		grass.setControlPts(cp);
-	}*/
+	//vec3 camera_position = vec3((m_distance * cos(m_pitch) * cos(m_yaw)), (m_distance * cos(m_pitch) * sin(m_yaw)), (m_distance * sin(m_pitch)));
 
 	for (int i = 0; i < grass_patch.size(); i++) {
 		grass_model grass = grass_patch.at(i);
+
 		if (!show_rendered_grass) {
 			// draw grass blade as bezier and spline
 			grass.drawSpline(view, proj);
@@ -250,8 +262,7 @@ void Application::render() {
 		}
 		else {
 			// draw grass blade rendered
-			vec3 camera_position = vec3((m_distance * cos(m_pitch) * cos(m_yaw)), (m_distance * cos(m_pitch) * sin(m_yaw)), (m_distance * sin(m_pitch)));
-			grass.drawBlade(view, proj, camera_position);
+			grass.drawBlade(view, proj);
 		}
 	}
 }
@@ -266,9 +277,22 @@ void Application::renderGUI() {
 
 	// display current camera parameters
 	ImGui::Text("Application %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-	ImGui::SliderFloat("Pitch", &m_pitch, -pi<float>() / 2, pi<float>() / 2, "%.2f");
-	ImGui::SliderFloat("Yaw", &m_yaw, -pi<float>(), pi<float>(), "%.2f");
-	ImGui::SliderFloat("Distance", &m_distance, 0, 100, "%.2f", 2.0f);
+	//vec3 pre_camera_position = vec3((m_distance * cos(m_pitch) * cos(m_yaw)), (m_distance * cos(m_pitch) * sin(m_yaw)), (m_distance * sin(m_pitch)));
+	if (ImGui::SliderFloat("Pitch", &m_pitch, -pi<float>() / 2, pi<float>() / 2, "%.2f")) {
+		for (int i = 0; i < grass_patch.size(); i++) {
+			grass_patch.at(i).resetBlade(vec3((m_distance * cos(m_pitch) * cos(m_yaw)), (m_distance * cos(m_pitch) * sin(m_yaw)), (m_distance * sin(m_pitch))));
+		}
+	}
+	if (ImGui::SliderFloat("Yaw", &m_yaw, -pi<float>(), pi<float>(), "%.2f")) {
+		for (int i = 0; i < grass_patch.size(); i++) {
+			grass_patch.at(i).resetBlade(vec3((m_distance * cos(m_pitch) * cos(m_yaw)), (m_distance * cos(m_pitch) * sin(m_yaw)), (m_distance * sin(m_pitch))));
+		}
+	}
+	if (ImGui::SliderFloat("Distance", &m_distance, 0, 100, "%.2f", 2.0f)) {
+		for (int i = 0; i < grass_patch.size(); i++) {
+			grass_patch.at(i).resetBlade(vec3((m_distance * cos(m_pitch) * cos(m_yaw)), (m_distance * cos(m_pitch) * sin(m_yaw)), (m_distance * sin(m_pitch))));
+		}
+	}
 
 	// helpful drawing options
 	ImGui::Checkbox("Show axis", &m_show_axis);

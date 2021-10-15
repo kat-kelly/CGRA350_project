@@ -28,7 +28,7 @@ struct basic_model {
 
 // Grass model struct by Katrina
 struct grass_model { // TODO: store in vbo
-	float lod = 10;
+	float lod = 2;
 	GLuint shader = 0;
 	cgra::gl_mesh spline_mesh;
 	cgra::gl_mesh curve_mesh;
@@ -39,10 +39,11 @@ struct grass_model { // TODO: store in vbo
 
 	void drawSpline(const glm::mat4& view, const glm::mat4 proj);
 	void drawCurve(const glm::mat4& view, const glm::mat4 proj);
-	void drawBlade(const glm::mat4& view, const glm::mat4 proj, glm::vec3 camPos);
+	void drawBlade(const glm::mat4& view, const glm::mat4 proj);
 	void setControlPts(glm::vec3 cp[4]);
 	void setMeshes(GLuint shader);
 	glm::vec3 interpolateBezier(float t);
+	void resetBlade(glm::vec3 cam);
 };
 
 // Main application class
