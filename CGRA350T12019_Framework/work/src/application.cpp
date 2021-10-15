@@ -69,9 +69,9 @@ void grass_model::drawBlade(const glm::mat4& view, const glm::mat4 proj, glm::ve
 	glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(modelview));
 	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(0, 1, 0))); // color is green
 	// shaders added by Katrina
-	glUniform3fv(glGetUniformLocation(shader, "cameraPos"), 1, value_ptr(camera)); // tessellation control
+	//glUniform3fv(glGetUniformLocation(shader, "cameraPos"), 1, value_ptr(camera)); // tessellation control
 
-	spline_mesh.draw(); // error
+	blade_mesh.draw();
 }
 
 void grass_model::setMeshes(GLuint shad) {
@@ -102,6 +102,26 @@ void grass_model::setMeshes(GLuint shad) {
 	}
 	mb_curve.mode = GL_LINE_STRIP;
 	curve_mesh = mb_curve.build();
+
+	// blade mesh
+	mesh_builder mb_blade = mesh_builder();
+	count = 0;
+	for (float i = 0; i <= 1; i = i + (1 / lod)) {
+		mesh_vertex mv;
+		mv.pos = interpolateBezier(i);
+		mv.norm = vec3(1, 0, 0);
+		mv.pos = vec3(mv.pos.x - 1 + i/2, mv.pos.y, mv.pos.z);
+		mb_blade.push_vertex(mv);
+		mb_blade.push_index(count);
+		count++;
+		mv.pos = vec3(mv.pos.x + 1 - i, mv.pos.y, mv.pos.z);
+		mb_blade.push_vertex(mv);
+		mb_blade.push_index(count);
+		count++;
+	}
+	mb_blade.mode = GL_TRIANGLE_STRIP;
+	blade_mesh = mb_blade.build();
+
 	shader = shad;
 }
 
@@ -132,12 +152,12 @@ void Application::setGrass()
 	// set shaders
 	shader_builder sb;
 	sb.set_shader(GL_VERTEX_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_vert.glsl"));
-	if (show_rendered_grass) {
+	/*if (show_rendered_grass) {
 		// added shaders by Katrina
 		sb.set_shader(GL_TESS_CONTROL_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_control.tesc"));
 		sb.set_shader(GL_TESS_EVALUATION_SHADER, CGRA_SRCDIR + std::string("//res//shaders//tessellation_eval.tese"));
 		sb.set_shader(GL_GEOMETRY_SHADER, CGRA_SRCDIR + std::string("//res//shaders//geometry.geom"));
-	}
+	}*/
 	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
 	GLuint shader = sb.build();
 
@@ -200,6 +220,27 @@ void Application::render() {
 	// wind
 	w_model.run(view, proj);
 
+	/*for (int i = 0; i < grass_patch.size(); i++) {
+		grass_model grass = grass_patch.at(i);
+		int index = w_model.getIndex(grass.controlPts[0].x, grass.controlPts[0].y, grass.controlPts[0].z); // index of wind in same area as grass
+		
+		vec3 cp[4]{ grass.controlPts[0], grass.controlPts[1], grass.controlPts[2], grass.controlPts[3] };
+
+		// for each control point besides root
+		float stiffness = 3;
+		for (int c = 1; c < 4; c++) {
+			// grass blade moves with wind
+			vec3 velocity = vec3(w_model.w_field->Vx[index], w_model.w_field->Vx[index], w_model.w_field->Vx[index]);
+			vec3 W = 5.0f * velocity; // thrust area * drag * velocity
+			vec3 R = stiffness * vec3(0, 0, 0) - grass.controlPts[c]; // stiffness * displacement * position norm
+			//vec3 D = vec3(w_model.w_angle) / vec3(glfwGetTime()); // damping coefficient * angular velocity
+			vec3 force = W + R;// + D; 
+			stiffness--; // stiffness lessens when further from root
+			cp[c] = grass.controlPts[c] + force;
+		}
+		grass.setControlPts(cp);
+	}*/
+
 	for (int i = 0; i < grass_patch.size(); i++) {
 		grass_model grass = grass_patch.at(i);
 		if (!show_rendered_grass) {
@@ -211,7 +252,6 @@ void Application::render() {
 			// draw grass blade rendered
 			vec3 camera_position = vec3((m_distance * cos(m_pitch) * cos(m_yaw)), (m_distance * cos(m_pitch) * sin(m_yaw)), (m_distance * sin(m_pitch)));
 			grass.drawBlade(view, proj, camera_position);
-			//m_model.draw(view, proj);
 		}
 	}
 }
@@ -256,13 +296,16 @@ void Application::renderGUI() {
 		w_model.display = -1;
 		w_model = wind_model();
 	}
-	if (ImGui::RadioButton("Off", w_model.display == 0)) w_model.display = 0;	ImGui::SameLine();
-	if (ImGui::RadioButton("On", w_model.display == 1)) w_model.display = 1;	ImGui::SameLine();
+	if (ImGui::RadioButton("Off", w_model.display == 0)) w_model.display = 0;    ImGui::SameLine();
+	if (ImGui::RadioButton("On", w_model.display == 1)) w_model.display = 1;    ImGui::SameLine();
 	if (ImGui::RadioButton("Visualize", w_model.display == 2)) w_model.display = 2;
 	if (w_model.display > 0) {
 		ImGui::SliderFloat("Wind Strength", &w_model.w_strength, 0, 5, "%.1f");
 		ImGui::SliderFloat("Wind Yaw", &w_model.w_angle, -20, 20, "%.1f");
 		ImGui::SliderFloat("Wind Pulse", &w_model.pulse, 0.0, 0.05, "%.2f");
+		if (w_model.display == 2) {
+			ImGui::Checkbox("Show balls", &w_model.balls);
+		}
 	}
 	ImGui::Separator();
 

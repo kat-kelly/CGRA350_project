@@ -35,7 +35,7 @@ struct grass_model { // TODO: store in vbo
 	cgra::gl_mesh blade_mesh; // TODO: not needed?
 	glm::vec3 color{ 0.7 };
 	glm::mat4 modelTransform{ 1.0 };
-	glm::vec3 controlPts[4]{ glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0) }; // FIXME: make changable
+	glm::vec3 controlPts[4]{ glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0), glm::vec3(-1, 1, 0) }; // FIXME: make changable
 
 	void drawSpline(const glm::mat4& view, const glm::mat4 proj);
 	void drawCurve(const glm::mat4& view, const glm::mat4 proj);
@@ -71,7 +71,6 @@ private:
 	basic_model m_model;
 	wind_model w_model;
 	std::vector<grass_model> grass_patch; // changable vector that holds multiple grass blades
-	//grass_model grass; // TODO: remove and use vector above instead
 
 	// rendering
 	int blade_count = 1;

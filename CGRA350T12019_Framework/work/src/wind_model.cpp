@@ -1,5 +1,5 @@
 #define GLM_ENABLE_EXPERIMENTAL
-#define IX(x, y, z) ((x) + (y) * N + (z) * N * N)
+#define INDEX(x, y, z) ((x) + (y) * N + (z) * N * N)
 
 // C++
 #include <iostream>
@@ -18,6 +18,7 @@
 #include "cgra/cgra_geometry.hpp"
 #include "wind_model.hpp"
 #include <cgra/cgra_shader.hpp>
+#include "..\..\..\..\..\GitHub\CGRA350_project\CGRA350T12019_Framework\work\src\wind_model.hpp"
 
 using namespace std;
 using namespace glm;
@@ -60,6 +61,7 @@ void wind_model::simulate() {
 			}
 
 			w_field->addVelocity(index1, vel);
+			w_field->addDensity(index1, length(vel) / 20);
 		}
 
 		w_field->step();
@@ -79,9 +81,13 @@ void wind_model::draw(const mat4& view, const mat4& proj)
 	for (int k = 0; k < N; ++k) {
 		for (int j = 0; j < N; ++j) {
 			for (int i = 0; i < N; ++i) {
-				float x = w_field->Vx[IX(i, j, k)];
-				float y = w_field->Vy[IX(i, j, k)];
-				float z = w_field->Vz[IX(i, j, k)];
+				float x = w_field->Vx[INDEX(i, j, k)];
+				float y = w_field->Vy[INDEX(i, j, k)];
+				float z = w_field->Vz[INDEX(i, j, k)];
+				float d = w_field->density[INDEX(i, j, k)];
+				if (d > 0) {
+					//w_field->addDensity(vec3(i, j, k), -0.00001);
+				}
 
 				vec = vec3(x, y, z);// setup
 				mv = view;
@@ -99,6 +105,19 @@ void wind_model::draw(const mat4& view, const mat4& proj)
 				glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(1 - len, len, 0)));
 				glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(mv));
 				drawCone();
+
+				if (balls) {
+					mv = view;
+					mv = scale(mv, vec3(S));// scale everything
+					mv = translate(mv, vec3(i + 0.5 - N / 2, j + 0.5, k + 0.5 - N / 2));	 // translate
+					mv = scale(mv, vec3(d, d, d));// scale
+					glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(vec3(1 - d * 10, 1 - d * 10, 1 - d * 10)));
+					glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(mv));
+					drawSphere();
+				}
+				else {
+					w_field->density[INDEX(i, j, k)] = 0;
+				}
 			}
 		}
 
@@ -107,6 +126,10 @@ void wind_model::draw(const mat4& view, const mat4& proj)
 
 }
 
+int wind_model::getIndex(float x, float y, float z)
+{
+	return (x)+(y)*N + (z)*N * N;
+}
 
 
 wind_field::wind_field(int N, float diffusion, float viscosity, float dt)
@@ -163,16 +186,15 @@ void wind_field::step()
 
 void wind_field::addVelocity(vec3 index, vec3 amount)
 {
-	int i = IX(index.x, index.y, index.z);
+	int i = INDEX(index.x, index.y, index.z);
 
 	Vx[i] += amount.x;
 	Vy[i] += amount.y;
 	Vz[i] += amount.z;
 }
-
-void wind_field::addDen(vec3 index, float amount)
+void wind_field::addDensity(vec3 index, float amount)
 {
-	int i = IX(index.x, index.y, index.z);
+	int i = INDEX(index.x, index.y, index.z);
 	density[i] += amount;
 }
 
@@ -200,9 +222,9 @@ void wind_field::advect(int b, float* d, float* d0, float* velocX, float* velocY
 	for (k = 1, kfloat = 1; k < N - 1; ++k, kfloat++) {
 		for (j = 1, jfloat = 1; j < N - 1; ++j, jfloat++) {
 			for (i = 1, ifloat = 1; i < N - 1; ++i, ifloat++) {
-				tmp1 = dtx * velocX[IX(i, j, k)];
-				tmp2 = dty * velocY[IX(i, j, k)];
-				tmp3 = dtz * velocZ[IX(i, j, k)];
+				tmp1 = dtx * velocX[INDEX(i, j, k)];
+				tmp2 = dty * velocY[INDEX(i, j, k)];
+				tmp3 = dtz * velocZ[INDEX(i, j, k)];
 				x = ifloat - tmp1;
 				y = jfloat - tmp2;
 				z = kfloat - tmp3;
@@ -234,16 +256,16 @@ void wind_field::advect(int b, float* d, float* d0, float* velocX, float* velocY
 				int k0i = k0;
 				int k1i = k1;
 
-				d[IX(i, j, k)] =
+				d[INDEX(i, j, k)] =
 
-					s0 * (t0 * (u0 * d0[IX(i0i, j0i, k0i)]
-						+ u1 * d0[IX(i0i, j0i, k1i)])
-						+ (t1 * (u0 * d0[IX(i0i, j1i, k0i)]
-							+ u1 * d0[IX(i0i, j1i, k1i)])))
-					+ s1 * (t0 * (u0 * d0[IX(i1i, j0i, k0i)]
-						+ u1 * d0[IX(i1i, j0i, k1i)])
-						+ (t1 * (u0 * d0[IX(i1i, j1i, k0i)]
-							+ u1 * d0[IX(i1i, j1i, k1i)])));
+					s0 * (t0 * (u0 * d0[INDEX(i0i, j0i, k0i)]
+						+ u1 * d0[INDEX(i0i, j0i, k1i)])
+						+ (t1 * (u0 * d0[INDEX(i0i, j1i, k0i)]
+							+ u1 * d0[INDEX(i0i, j1i, k1i)])))
+					+ s1 * (t0 * (u0 * d0[INDEX(i1i, j0i, k0i)]
+						+ u1 * d0[INDEX(i1i, j0i, k1i)])
+						+ (t1 * (u0 * d0[INDEX(i1i, j1i, k0i)]
+							+ u1 * d0[INDEX(i1i, j1i, k1i)])));
 			}
 		}
 	}
@@ -255,15 +277,15 @@ void wind_field::project(float* velocX, float* velocY, float* velocZ, float* p, 
 	for (int k = 1; k < N - 1; ++k) {
 		for (int j = 1; j < N - 1; ++j) {
 			for (int i = 1; i < N - 1; ++i) {
-				div[IX(i, j, k)] = -0.5f * (
-					velocX[IX(i + 1, j, k)]
-					- velocX[IX(i - 1, j, k)]
-					+ velocY[IX(i, j + 1, k)]
-					- velocY[IX(i, j - 1, k)]
-					+ velocZ[IX(i, j, k + 1)]
-					- velocZ[IX(i, j, k - 1)]
+				div[INDEX(i, j, k)] = -0.5f * (
+					velocX[INDEX(i + 1, j, k)]
+					- velocX[INDEX(i - 1, j, k)]
+					+ velocY[INDEX(i, j + 1, k)]
+					- velocY[INDEX(i, j - 1, k)]
+					+ velocZ[INDEX(i, j, k + 1)]
+					- velocZ[INDEX(i, j, k - 1)]
 					) / N;
-				p[IX(i, j, k)] = 0;
+				p[INDEX(i, j, k)] = 0;
 			}
 		}
 	}
@@ -274,12 +296,12 @@ void wind_field::project(float* velocX, float* velocY, float* velocZ, float* p, 
 	for (int k = 1; k < N - 1; ++k) {
 		for (int j = 1; j < N - 1; ++j) {
 			for (int i = 1; i < N - 1; ++i) {
-				velocX[IX(i, j, k)] -= 0.5f * (p[IX(i + 1, j, k)]
-					- p[IX(i - 1, j, k)]) * N;
-				velocY[IX(i, j, k)] -= 0.5f * (p[IX(i, j + 1, k)]
-					- p[IX(i, j - 1, k)]) * N;
-				velocZ[IX(i, j, k)] -= 0.5f * (p[IX(i, j, k + 1)]
-					- p[IX(i, j, k - 1)]) * N;
+				velocX[INDEX(i, j, k)] -= 0.5f * (p[INDEX(i + 1, j, k)]
+					- p[INDEX(i - 1, j, k)]) * N;
+				velocY[INDEX(i, j, k)] -= 0.5f * (p[INDEX(i, j + 1, k)]
+					- p[INDEX(i, j - 1, k)]) * N;
+				velocZ[INDEX(i, j, k)] -= 0.5f * (p[INDEX(i, j, k + 1)]
+					- p[INDEX(i, j, k - 1)]) * N;
 			}
 		}
 	}
@@ -290,20 +312,20 @@ void wind_field::project(float* velocX, float* velocY, float* velocZ, float* p, 
 
 void wind_field::lin_solve(int b, float* x, float* x0, float a, float c)
 {
-	float cRecip = 1.0 / c;
+	float cc = 1.0 / c;
 	for (int k = 0; k < iter; ++k) {
 		for (int m = 1; m < N - 1; ++m) {
 			for (int j = 1; j < N - 1; ++j) {
 				for (int i = 1; i < N - 1; ++i) {
-					x[IX(i, j, m)] =
-						(x0[IX(i, j, m)]
-							+ a * (x[IX(i + 1, j, m)]
-								+ x[IX(i - 1, j, m)]
-								+ x[IX(i, j + 1, m)]
-								+ x[IX(i, j - 1, m)]
-								+ x[IX(i, j, m + 1)]
-								+ x[IX(i, j, m - 1)]
-								)) * cRecip;
+					x[INDEX(i, j, m)] =
+						(x0[INDEX(i, j, m)]
+							+ a * (x[INDEX(i + 1, j, m)]
+								+ x[INDEX(i - 1, j, m)]
+								+ x[INDEX(i, j + 1, m)]
+								+ x[INDEX(i, j - 1, m)]
+								+ x[INDEX(i, j, m + 1)]
+								+ x[INDEX(i, j, m - 1)]
+								)) * cc;
 				}
 			}
 		}
@@ -314,372 +336,50 @@ void wind_field::set_Boundaries(int b, float* x)
 {
 	for (int j = 1; j < N - 1; ++j) {
 		for (int i = 1; i < N - 1; ++i) {
-			x[IX(i, j, 0)] = b == 3 ? -x[IX(i, j, 1)] : x[IX(i, j, 1)];
-			x[IX(i, j, N - 1)] = b == 3 ? -x[IX(i, j, N - 2)] : x[IX(i, j, N - 2)];
+			x[INDEX(i, j, 0)] = b == 3 ? -x[INDEX(i, j, 1)] : x[INDEX(i, j, 1)];
+			x[INDEX(i, j, N - 1)] = b == 3 ? -x[INDEX(i, j, N - 2)] : x[INDEX(i, j, N - 2)];
 		}
 	}
 	for (int k = 1; k < N - 1; ++k) {
 		for (int i = 1; i < N - 1; ++i) {
-			x[IX(i, 0, k)] = b == 2 ? -x[IX(i, 1, k)] : x[IX(i, 1, k)];
-			x[IX(i, N - 1, k)] = b == 2 ? -x[IX(i, N - 2, k)] : x[IX(i, N - 2, k)];
+			x[INDEX(i, 0, k)] = b == 2 ? -x[INDEX(i, 1, k)] : x[INDEX(i, 1, k)];
+			x[INDEX(i, N - 1, k)] = b == 2 ? -x[INDEX(i, N - 2, k)] : x[INDEX(i, N - 2, k)];
 		}
 	}
 	for (int k = 1; k < N - 1; ++k) {
 		for (int j = 1; j < N - 1; ++j) {
-			x[IX(0, j, k)] = b == 1 ? -x[IX(1, j, k)] : x[IX(1, j, k)];
-			x[IX(N - 1, j, k)] = b == 1 ? -x[IX(N - 2, j, k)] : x[IX(N - 2, j, k)];
+			x[INDEX(0, j, k)] = b == 1 ? -x[INDEX(1, j, k)] : x[INDEX(1, j, k)];
+			x[INDEX(N - 1, j, k)] = b == 1 ? -x[INDEX(N - 2, j, k)] : x[INDEX(N - 2, j, k)];
 		}
 	}
 
-	x[IX(0, 0, 0)] = 0.33f * (x[IX(1, 0, 0)]
-		+ x[IX(0, 1, 0)]
-		+ x[IX(0, 0, 1)]);
-	x[IX(0, N - 1, 0)] = 0.33f * (x[IX(1, N - 1, 0)]
-		+ x[IX(0, N - 2, 0)]
-		+ x[IX(0, N - 1, 1)]);
-	x[IX(0, 0, N - 1)] = 0.33f * (x[IX(1, 0, N - 1)]
-		+ x[IX(0, 1, N - 1)]
-		+ x[IX(0, 0, N)]);
-	x[IX(0, N - 1, N - 1)] = 0.33f * (x[IX(1, N - 1, N - 1)]
-		+ x[IX(0, N - 2, N - 1)]
-		+ x[IX(0, N - 1, N - 2)]);
-	x[IX(N - 1, 0, 0)] = 0.33f * (x[IX(N - 2, 0, 0)]
-		+ x[IX(N - 1, 1, 0)]
-		+ x[IX(N - 1, 0, 1)]);
-	x[IX(N - 1, N - 1, 0)] = 0.33f * (x[IX(N - 2, N - 1, 0)]
-		+ x[IX(N - 1, N - 2, 0)]
-		+ x[IX(N - 1, N - 1, 1)]);
-	x[IX(N - 1, 0, N - 1)] = 0.33f * (x[IX(N - 2, 0, N - 1)]
-		+ x[IX(N - 1, 1, N - 1)]
-		+ x[IX(N - 1, 0, N - 2)]);
-	x[IX(N - 1, N - 1, N - 1)] = 0.33f * (x[IX(N - 2, N - 1, N - 1)]
-		+ x[IX(N - 1, N - 2, N - 1)]
-		+ x[IX(N - 1, N - 1, N - 2)]);
+	x[INDEX(0, 0, 0)] = 0.33f * (x[INDEX(1, 0, 0)]
+		+ x[INDEX(0, 1, 0)]
+		+ x[INDEX(0, 0, 1)]);
+	x[INDEX(0, N - 1, 0)] = 0.33f * (x[INDEX(1, N - 1, 0)]
+		+ x[INDEX(0, N - 2, 0)]
+		+ x[INDEX(0, N - 1, 1)]);
+	x[INDEX(0, 0, N - 1)] = 0.33f * (x[INDEX(1, 0, N - 1)]
+		+ x[INDEX(0, 1, N - 1)]
+		+ x[INDEX(0, 0, N)]);
+	x[INDEX(0, N - 1, N - 1)] = 0.33f * (x[INDEX(1, N - 1, N - 1)]
+		+ x[INDEX(0, N - 2, N - 1)]
+		+ x[INDEX(0, N - 1, N - 2)]);
+	x[INDEX(N - 1, 0, 0)] = 0.33f * (x[INDEX(N - 2, 0, 0)]
+		+ x[INDEX(N - 1, 1, 0)]
+		+ x[INDEX(N - 1, 0, 1)]);
+	x[INDEX(N - 1, N - 1, 0)] = 0.33f * (x[INDEX(N - 2, N - 1, 0)]
+		+ x[INDEX(N - 1, N - 2, 0)]
+		+ x[INDEX(N - 1, N - 1, 1)]);
+	x[INDEX(N - 1, 0, N - 1)] = 0.33f * (x[INDEX(N - 2, 0, N - 1)]
+		+ x[INDEX(N - 1, 1, N - 1)]
+		+ x[INDEX(N - 1, 0, N - 2)]);
+	x[INDEX(N - 1, N - 1, N - 1)] = 0.33f * (x[INDEX(N - 2, N - 1, N - 1)]
+		+ x[INDEX(N - 1, N - 2, N - 1)]
+		+ x[INDEX(N - 1, N - 1, N - 2)]);
 }
 
-//void wind_field::step() {
-//	diffuse(1, V0, V, viscosity);
-//
-//	project(V0, V);
-//
-//	advect(1, Vx, Vx0, Vx0, Vy0, Vz0);
-//	advect(2, Vy, Vy0, Vx0, Vy0, Vz0);
-//	advect(3, Vz, Vz0, Vx0, Vy0, Vz0);
-//
-//	project(V,V0);
-//
-//	diffuse(0, s, density, diffusion);
-//	advect(0, density, s, Vx, Vy, Vz);
-//}
-//
-//void wind_field::addForces(int x, int y, int z, vec3 amount)
-//{
-//	int N = N;
-//	V[IX(x, y, z)] += amount;
-//}
-//
-//wind_field::wind_field(int N, int diffusion, int viscosity, float dt)
-//{
-//
-//	this->N = N;
-//	this->dt = dt;
-//	this->diffusion = diffusion;
-//	this->viscosity = viscosity;
-//
-//	this->s = new float[N * N * N];
-//	this->density = new float[N * N * N];
-//
-//	this->V = new vec3[N * N * N];
-//	this->V0 = new vec3[N * N * N];
-//}
-//
-//void wind_field::diffuse(int b, vec3* x, vec3* x0, float diff)
-//{
-//	float a = dt * diff * (N - 2) * (N - 2);
-//	lin_solve(b, x, x0, a, 1 + 6 * a);
-//}
-//
-//void wind_field::diffuse(int b, float* x, float* x0, float diff)
-//{
-//	float a = dt * diff * (N - 2) * (N - 2);
-//	lin_solve(b, x, x0, a, 1 + 6 * a);
-//}
-//
-//void wind_field::lin_solve(int b, vec3* x, vec3* x0, float a, float c) {
-//	float cRecip = 1.0 / c;
-//	for (int k = 0; k < iter; ++k) {
-//		for (int m = 1; m < N - 1; ++m) {
-//			for (int j = 1; j < N - 1; ++j) {
-//				for (int i = 1; i < N - 1; ++i) {
-//
-//					x[IX(i, j, m)].x =
-//						(x0[IX(i, j, m)].x
-//							+ a * (x[IX(i + 1, j, m)].x
-//								+ x[IX(i - 1, j, m)].x
-//								+ x[IX(i, j + 1, m)].x
-//								+ x[IX(i, j - 1, m)].x
-//								+ x[IX(i, j, m + 1)].x
-//								+ x[IX(i, j, m - 1)].x
-//								)) * cRecip;
-//
-//					x[IX(i, j, m)].y =
-//						(x0[IX(i, j, m)].y
-//							+ a * (x[IX(i + 1, j, m)].y
-//								+ x[IX(i - 1, j, m)].y
-//								+ x[IX(i, j + 1, m)].y
-//								+ x[IX(i, j - 1, m)].y
-//								+ x[IX(i, j, m + 1)].y
-//								+ x[IX(i, j, m - 1)].y
-//								)) * cRecip;
-//
-//					x[IX(i, j, m)].z =
-//						(x0[IX(i, j, m)].z
-//							+ a * (x[IX(i + 1, j, m)].z
-//								+ x[IX(i - 1, j, m)].z
-//								+ x[IX(i, j + 1, m)].z
-//								+ x[IX(i, j - 1, m)].z
-//								+ x[IX(i, j, m + 1)].z
-//								+ x[IX(i, j, m - 1)].z
-//								)) * cRecip;
-//				}
-//			}
-//		}
-//		//set_bnd(b, x);
-//	}
-//}
-//
-//void wind_field::lin_solve(int b, float* x, float* x0, float a, float c) {
-//	float cRecip = 1.0 / c;
-//	for (int k = 0; k < iter; ++k) {
-//		for (int m = 1; m < N - 1; ++m) {
-//			for (int j = 1; j < N - 1; ++j) {
-//				for (int i = 1; i < N - 1; ++i) {
-//					x[IX(i, j, m)] =
-//						(x0[IX(i, j, m)]
-//							+ a * (x[IX(i + 1, j, m)]
-//								+ x[IX(i - 1, j, m)]
-//								+ x[IX(i, j + 1, m)]
-//								+ x[IX(i, j - 1, m)]
-//								+ x[IX(i, j, m + 1)]
-//								+ x[IX(i, j, m - 1)]
-//								)) * cRecip;
-//				}
-//			}
-//		}
-//		set_bnd(b, x);
-//	}
-//}
-//void wind_field::project(vec3* veloc, vec3* pdiv) {
-//	for (int k = 1; k < N - 1; ++k) {
-//		for (int j = 1; j < N - 1; ++j) {
-//			for (int i = 1; i < N - 1; ++i) {
-//				pdiv[IX(i, j, k)].y = -0.5f * (
-//					veloc[IX(i + 1, j, k)].x
-//					- veloc[IX(i - 1, j, k)].x
-//					+ veloc[IX(i, j + 1, k)].y
-//					- veloc[IX(i, j - 1, k)].y
-//					+ veloc[IX(i, j, k + 1)].z
-//					- veloc[IX(i, j, k - 1)].z
-//					) / N;
-//				pdiv[IX(i, j, k)].x = 0;
-//			}
-//		}
-//	}
-//	//set_bnd(0, div);
-//	//set_bnd(0, p);
-//	lin_solve(0, p, div, 1, 6);
-//
-//	for (int k = 1; k < N - 1; ++k) {
-//		for (int j = 1; j < N - 1; ++j) {
-//			for (int i = 1; i < N - 1; ++i) {
-//				veloc[IX(i, j, k)].x -= 0.5f * (pdiv[IX(i + 1, j, k)].x
-//					- pdiv[IX(i - 1, j, k)].x) * N;
-//				veloc[IX(i, j, k)].y -= 0.5f * (pdiv[IX(i, j + 1, k)].x
-//					- pdiv[IX(i, j - 1, k)].x) * N;
-//				veloc[IX(i, j, k)].z -= 0.5f * (pdiv[IX(i, j, k + 1)].x
-//					- pdiv[IX(i, j, k - 1)].x) * N;
-//			}
-//		}
-//	}
-//	//set_bnd(1, velocX);
-//	//set_bnd(2, velocY);
-//	//set_bnd(3, velocZ);
-//}
-//
-//void wind_field::advect(int b, float* d, float* d0, vec3* veloc)
-//{
-//	vec3 ijk0, ijk1;
-//
-//	float ddt = dt * (N - 2);
-//
-//	vec3 stu0, stu1;
-//
-//	vec3 tmp, dim;
-//
-//	float Nfloat = N;
-//	float ifloat, jfloat, kfloat;
-//	int i, j, k;
-//
-//	for (k = 1, kfloat = 1; k < N - 1; ++k, kfloat++) {
-//		for (j = 1, jfloat = 1; j < N - 1; ++j, jfloat++) {
-//			for (i = 1, ifloat = 1; i < N - 1; ++i, ifloat++) {
-//				tmp = ddt * veloc[IX(i, j, k)];
-//				dim = vec3(ifloat - tmp.x, jfloat - tmp.y, kfloat - tmp.z);
-//
-//				if (dim.x < 0.5f)dim.x = 0.5f;
-//				if (dim.x > Nfloat + 0.5f) dim.x = Nfloat + 0.5f;
-//
-//				if (dim.y < 0.5f) dim.y = 0.5f;
-//				if (dim.y > Nfloat + 0.5f) dim.y = Nfloat + 0.5f;
-//
-//				if (dim.z < 0.5f) dim.z = 0.5f;
-//				if (dim.z > Nfloat + 0.5f) dim.z = Nfloat + 0.5f;
-//
-//				ijk0 = vec3(floorf(dim.x), floorf(dim.y), floorf(dim.z));
-//				ijk1 = vec3(ijk0.x + 1.0f, ijk0.y + 1.0f, ijk0.z + 1.0f);
-//
-//				stu1 = vec3(dim.x - ijk0.x, dim.y - ijk0.y, dim.z - ijk0.z);
-//				stu0 = vec3(1.0f - stu1.x, 1.0f - stu1.y, 1.0f - stu1.z);
-//
-//				int i0i = ijk0.x;
-//				int i1i = ijk1.x;
-//				int j0i = ijk0.y;
-//				int j1i = ijk1.y;
-//				int k0i = ijk0.z;
-//				int k1i = ijk1.z;
-//
-//				d[IX(i, j, k)] =
-//
-//					stu0.x * (stu0.y * (stu0.z * d0[IX(i0i, j0i, k0i)]
-//										+ stu1.z * d0[IX(i0i, j0i, k1i)])
-//						+ (stu1.y * (stu0.z * d0[IX(i0i, j1i, k0i)]
-//										+ stu1.z * d0[IX(i0i, j1i, k1i)])))
-//					+ stu1.x * (stu0.y * (stu0.z * d0[IX(i1i, j0i, k0i)]
-//										+ stu1.z * d0[IX(i1i, j0i, k1i)])
-//						+ (stu1.y * (stu0.z * d0[IX(i1i, j1i, k0i)]
-//										+ stu1.z * d0[IX(i1i, j1i, k1i)])));
-//			}
-//		}
-//	}
-//	//set_bnd(b, d);
-//}
-//
-//void wind_field::set_bnd(int b, vec3* x)
-//{
-//	for (int j = 1; j < N - 1; ++j) {
-//		for (int i = 1; i < N - 1; ++i) {
-//			x[IX(i, j, 0)] = b == 3 ? -x[IX(i, j, 1)] : x[IX(i, j, 1)];
-//			x[IX(i, j, N - 1)] = b == 3 ? -x[IX(i, j, N - 2)] : x[IX(i, j, N - 2)];
-//		}
-//	}
-//	for (int k = 1; k < N - 1; ++k) {
-//		for (int i = 1; i < N - 1; ++i) {
-//			x[IX(i, 0, k)] = b == 2 ? -x[IX(i, 1, k)] : x[IX(i, 1, k)];
-//			x[IX(i, N - 1, k)] = b == 2 ? -x[IX(i, N - 2, k)] : x[IX(i, N - 2, k)];
-//		}
-//	}
-//	for (int k = 1; k < N - 1; ++k) {
-//		for (int j = 1; j < N - 1; ++j) {
-//			x[IX(0, j, k)] = b == 1 ? -x[IX(1, j, k)] : x[IX(1, j, k)];
-//			x[IX(N - 1, j, k)] = b == 1 ? -x[IX(N - 2, j, k)] : x[IX(N - 2, j, k)];
-//		}
-//	}
-//
-//	x[IX(0, 0, 0)] = 0.33f * (x[IX(1, 0, 0)]
-//		+ x[IX(0, 1, 0)]
-//		+ x[IX(0, 0, 1)]);
-//	x[IX(0, N - 1, 0)] = 0.33f * (x[IX(1, N - 1, 0)]
-//		+ x[IX(0, N - 2, 0)]
-//		+ x[IX(0, N - 1, 1)]);
-//	x[IX(0, 0, N - 1)] = 0.33f * (x[IX(1, 0, N - 1)]
-//		+ x[IX(0, 1, N - 1)]
-//		+ x[IX(0, 0, N)]);
-//	x[IX(0, N - 1, N - 1)] = 0.33f * (x[IX(1, N - 1, N - 1)]
-//		+ x[IX(0, N - 2, N - 1)]
-//		+ x[IX(0, N - 1, N - 2)]);
-//	x[IX(N - 1, 0, 0)] = 0.33f * (x[IX(N - 2, 0, 0)]
-//		+ x[IX(N - 1, 1, 0)]
-//		+ x[IX(N - 1, 0, 1)]);
-//	x[IX(N - 1, N - 1, 0)] = 0.33f * (x[IX(N - 2, N - 1, 0)]
-//		+ x[IX(N - 1, N - 2, 0)]
-//		+ x[IX(N - 1, N - 1, 1)]);
-//	x[IX(N - 1, 0, N - 1)] = 0.33f * (x[IX(N - 2, 0, N - 1)]
-//		+ x[IX(N - 1, 1, N - 1)]
-//		+ x[IX(N - 1, 0, N - 2)]);
-//	x[IX(N - 1, N - 1, N - 1)] = 0.33f * (x[IX(N - 2, N - 1, N - 1)]
-//		+ x[IX(N - 1, N - 2, N - 1)]
-//		+ x[IX(N - 1, N - 1, N - 2)]);
-//}
-//
-//void wind_field::set_bnd(int b, float* x)
-//{
-//	for (int j = 1; j < N - 1; ++j) {
-//		for (int i = 1; i < N - 1; ++i) {
-//			x[IX(i, j, 0)] = b == 3 ? -x[IX(i, j, 1)] : x[IX(i, j, 1)];
-//			x[IX(i, j, N - 1)] = b == 3 ? -x[IX(i, j, N - 2)] : x[IX(i, j, N - 2)];
-//		}
-//	}
-//	for (int k = 1; k < N - 1; ++k) {
-//		for (int i = 1; i < N - 1; ++i) {
-//			x[IX(i, 0, k)] = b == 2 ? -x[IX(i, 1, k)] : x[IX(i, 1, k)];
-//			x[IX(i, N - 1, k)] = b == 2 ? -x[IX(i, N - 2, k)] : x[IX(i, N - 2, k)];
-//		}
-//	}
-//	for (int k = 1; k < N - 1; ++k) {
-//		for (int j = 1; j < N - 1; ++j) {
-//			x[IX(0, j, k)] = b == 1 ? -x[IX(1, j, k)] : x[IX(1, j, k)];
-//			x[IX(N - 1, j, k)] = b == 1 ? -x[IX(N - 2, j, k)] : x[IX(N - 2, j, k)];
-//		}
-//	}
-//
-//	x[IX(0, 0, 0)] = 0.33f * (x[IX(1, 0, 0)]
-//		+ x[IX(0, 1, 0)]
-//		+ x[IX(0, 0, 1)]);
-//	x[IX(0, N - 1, 0)] = 0.33f * (x[IX(1, N - 1, 0)]
-//		+ x[IX(0, N - 2, 0)]
-//		+ x[IX(0, N - 1, 1)]);
-//	x[IX(0, 0, N - 1)] = 0.33f * (x[IX(1, 0, N - 1)]
-//		+ x[IX(0, 1, N - 1)]
-//		+ x[IX(0, 0, N)]);
-//	x[IX(0, N - 1, N - 1)] = 0.33f * (x[IX(1, N - 1, N - 1)]
-//		+ x[IX(0, N - 2, N - 1)]
-//		+ x[IX(0, N - 1, N - 2)]);
-//	x[IX(N - 1, 0, 0)] = 0.33f * (x[IX(N - 2, 0, 0)]
-//		+ x[IX(N - 1, 1, 0)]
-//		+ x[IX(N - 1, 0, 1)]);
-//	x[IX(N - 1, N - 1, 0)] = 0.33f * (x[IX(N - 2, N - 1, 0)]
-//		+ x[IX(N - 1, N - 2, 0)]
-//		+ x[IX(N - 1, N - 1, 1)]);
-//	x[IX(N - 1, 0, N - 1)] = 0.33f * (x[IX(N - 2, 0, N - 1)]
-//		+ x[IX(N - 1, 1, N - 1)]
-//		+ x[IX(N - 1, 0, N - 2)]);
-//	x[IX(N - 1, N - 1, N - 1)] = 0.33f * (x[IX(N - 2, N - 1, N - 1)]
-//		+ x[IX(N - 1, N - 2, N - 1)]
-//		+ x[IX(N - 1, N - 1, N - 2)]);
-//}
-
-	// ___________________________________		ITEMS __________________________________________________//
-	//vec = vec3(N, N, N);// setup
-	//mv = view;
-
-	//mv = translate(mv, vec3(-N / 2, 0, -N / 2));	 // translate
-	//mv = mv * orientation(normalize(vec), vec3(0, 0, 1));		// rotation
-	//mv = scale(mv, vec3(0.1, 0.1, length(vec)));				// scale
-
-	//glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(mv));
-	//drawCylinder();
-
-	// ___________________________________		ITEMS idk __________________________________________________//
-	//float x = w_field->Vy[IX(0, 0, 0)];
-	//cout << x;
-
-
-	//_________________________		Wind  testing      _________________________________________________//
-	//vec = vec3(3, 5, 5); // setup
-	//mv = view;
-
-	//mv = mv * orientation(normalize(vec), vec3(0, 0, 1));	// direction
-	//mv = scale(mv, vec3(1, 1, length(vec)));				 // strength
-
-	//glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(mv));
-	//drawCone();
+int wind_field::getIndex(float x, float y, float z)
+{
+	return (x)+(y)*N + (z)*N * N;
+}

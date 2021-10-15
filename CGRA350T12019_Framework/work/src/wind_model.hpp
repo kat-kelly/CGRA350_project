@@ -17,7 +17,7 @@ private:
 	float diffusion;
 	float viscosity;
 
-	// density previouse velocities 
+	// density previous velocities 
 	float* s;
 	float* Vx0;
 	float* Vy0;
@@ -36,6 +36,7 @@ public:
 	void addDensity(vec3 index, float amount);
 	void addVelocity(vec3 index, vec3 amount);
 	void step();
+	int getIndex(float x, float y, float z);
 
 	// current velocitys and densitys
 	float* density;
@@ -91,4 +92,5 @@ public:
 
 	//Step method used for simulate and updating the wind_field vectors with options for displaying wind visualization.
 	void run(const mat4& view, const mat4& proj);
+	int getIndex(float x, float y, float z);
 };
