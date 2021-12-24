@@ -22,4 +22,3 @@ Set `Working Directory` to `$(SolutionDir)../work`
 Set `Command Arguments` to whatever is required by your program
 
 
-This was forked from original group. 
